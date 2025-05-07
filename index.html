@@ -49,6 +49,90 @@
     .submenu { display:none; flex-direction:column; margin-left:0.75rem; }
     .submenu a { text-decoration:none; color:var(--muted); font-size:0.8rem; padding:0.3rem 0; cursor:pointer; }
 
+    /* ---------------- PROGRESS INDICATOR ---------------- */
+    .progress-sidebar {
+      position: relative;
+      padding-left: 40px;
+    }
+    
+    .progress-line {
+      position: absolute;
+      left: 20px;
+      top: 30px;
+      bottom: 20px;
+      width: 2px;
+      background-color: var(--border);
+      z-index: 1;
+    }
+    
+    .nav-item {
+      position: relative;
+    }
+    
+    .progress-step {
+      position: absolute;
+      left: -31px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      border: 2px solid var(--border);
+      background-color: var(--panel);
+      z-index: 2;
+      transition: all 0.3s ease;
+    }
+    
+    .progress-step.completed {
+      border-color: #6366f1;
+      background-color: #6366f1;
+    }
+    
+    .progress-step.current {
+      border-color: #6366f1;
+      background-color: var(--panel);
+    }
+    
+    .progress-step.current::before {
+      content: "";
+      position: absolute;
+      top: 5px;
+      left: 5px;
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background-color: #6366f1;
+    }
+    
+    .progress-step.future {
+      border-color: var(--border);
+      background-color: var(--panel);
+    }
+    
+    .nav-item.completed {
+      color: #fff;
+      font-weight: 500;
+    }
+    
+    .nav-item.current {
+      color: #fff;
+      font-weight: 600;
+    }
+    
+    .nav-item.future {
+      color: var(--muted);
+    }
+    
+    /* Completed line segments */
+    .progress-line-completed {
+      position: absolute;
+      left: 20px;
+      top: 30px;
+      width: 2px;
+      background-color: #6366f1;
+      z-index: 1;
+    }
+
     /* ---------------- MAIN ---------------- */
     main { flex:1; overflow-y:auto; padding:2rem; }
     h1 { font-size:1.5rem; font-weight:600; margin-bottom:1.5rem; }
@@ -109,6 +193,91 @@
     .info-item { background: var(--panel); border: 1px solid var(--border); padding: 1rem; border-radius: 0.5rem; }
     .info-item-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
     .info-item-value { font-size: 1rem; }
+
+    /* Main container */
+    .bs-container {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--bg);
+    }
+    
+    /* Table basics */
+    .bs-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.85rem;
+    }
+    .bs-table th {
+      padding: 0.75rem;
+      text-align: left;
+      position: sticky;
+      top: 0;
+      background: var(--panel);
+      z-index: 10;
+      border-bottom: 1px solid var(--border);
+    }
+    .bs-table td {
+      padding: 0.75rem;
+      border-bottom: 1px solid var(--border);
+    }
+    
+    /* Level 1 - Top level categories (non-movable) */
+    .bs-level1 {
+      font-weight: 700;
+      font-size: 0.95rem;
+      background: var(--panel);
+      cursor: not-allowed;
+    }
+    .bs-level1 td:first-child {
+      border-left: 3px solid var(--accent);
+    }
+    .bs-level1:hover {
+      background: var(--panel);
+    }
+    
+    /* Level 2 - Subcategories (non-movable) */
+    .bs-level2 {
+      font-weight: 600;
+      background: rgba(26, 26, 26, 0.6);
+      cursor: not-allowed;
+    }
+    .bs-level2 td:first-child {
+      padding-left: 2rem !important;
+      border-left: 2px solid var(--border);
+    }
+    .bs-level2:hover {
+      background: rgba(26, 26, 26, 0.6);
+    }
+    
+    /* Level 3 - Sub-subcategories (non-movable) */
+    .bs-level3 {
+      font-weight: 500;
+      background: rgba(26, 26, 26, 0.4);
+      cursor: not-allowed;
+    }
+    .bs-level3 td:first-child {
+      padding-left: 3.5rem !important;
+      border-left: 1px solid var(--border);
+    }
+    .bs-level3:hover {
+      background: rgba(26, 26, 26, 0.4);
+    }
+    
+    /* Level 4 - Line items (movable) */
+    .bs-level4 {
+      background: transparent;
+    }
+    .bs-level4 td:first-child {
+      padding-left: 5rem !important;
+    }
+    .bs-level4.draggable {
+      cursor: move;
+    }
+    .bs-level4.dragging {
+      opacity: 0.5;
+      background: rgba(255, 104, 51, 0.2);
+    }
   </style>
 </head>
 <body>
@@ -121,21 +290,48 @@
     </div>
     <div class="nav-item" id="companyBtn" data-screen="getStarted">Parker Group, Inc.</div>
 
-    <nav>
-      <div class="nav-item" data-target="uwInfo">Underwriting Information <span>▸</span></div>
+    <nav class="progress-sidebar">
+      <div class="progress-line"></div>
+      <div class="progress-line-completed" id="progressCompleted"></div>
+      
+      <div class="nav-item" data-target="uwInfo">
+        <div class="progress-step completed"></div>
+        <span>Underwriting Information <span>▸</span></span>
+      </div>
       <div class="submenu" id="uwInfo"><a data-screen="uwDetails">UW Details</a></div>
 
-      <div class="nav-item" data-screen="dataGathering">Data gathering</div>
+      <div class="nav-item" data-screen="dataGathering">
+        <div class="progress-step current"></div>
+        <span>Data gathering</span>
+      </div>
 
-      <div class="nav-item" data-target="labelMetric">Labeling & metric calculation <span>▸</span></div>
-      <div class="submenu" id="labelMetric"><a data-screen="plLabeling">Profit & loss labeling</a><a data-screen="bsLabeling">Balance sheet labeling</a><a data-screen="bankLabeling">Banking labeling</a><a data-screen="graphsMetrics">Graphs & metric decisions</a></div>
+      <div class="nav-item" data-target="labeling">
+        <div class="progress-step future"></div>
+        <span>Labeling <span>▸</span></span>
+      </div>
+      <div class="submenu" id="labeling"><a data-screen="plLabeling">Profit & loss labeling</a><a data-screen="bsLabeling">Balance sheet labeling</a><a data-screen="bankLabeling">Banking labeling</a></div>
 
-      <div class="nav-item" data-target="spend">Spend <span>▸</span></div>
+      <div class="nav-item" data-target="metricCalc">
+        <div class="progress-step future"></div>
+        <span>Metric Calculation <span>▸</span></span>
+      </div>
+      <div class="submenu" id="metricCalc"><a data-screen="graphsMetrics">Graphs & metric decisions</a></div>
+
+      <div class="nav-item" data-target="spend">
+        <div class="progress-step future"></div>
+        <span>Spend <span>▸</span></span>
+      </div>
       <div class="submenu" id="spend"><a data-screen="spendBanking">Banking</a><a data-screen="spendParker">Parker</a></div>
 
-      <div class="nav-item" data-screen="scoring">Scoring</div>
+      <div class="nav-item" data-screen="scoring">
+        <div class="progress-step future"></div>
+        <span>Scoring</span>
+      </div>
 
-      <div class="nav-item" data-target="decisions">Decisions <span>▸</span></div>
+      <div class="nav-item" data-target="decisions">
+        <div class="progress-step future"></div>
+        <span>Decisions <span>▸</span></span>
+      </div>
       <div class="submenu" id="decisions"><a data-screen="securities">Securities</a><a data-screen="finalDecisions">Final decisions</a></div>
     </nav>
   </aside>
@@ -179,7 +375,28 @@
     function addMessage(text,type){ const div=document.createElement('div'); div.className=`msg ${type}`; div.textContent=text; chatMessages.appendChild(div); chatMessages.scrollTop=chatMessages.scrollHeight; }
 
     /******************** EXISTING NAV DROPDOWN LOGIC (unchanged) *************************/
-    document.querySelectorAll('.nav-item[data-target]').forEach(item=>{ item.addEventListener('click', ()=>{ const submenu=document.getElementById(item.dataset.target); if(submenu){ const open=submenu.style.display==='flex'; submenu.style.display=open?'none':'flex'; const arrow=item.querySelector('span:last-child'); if(arrow) arrow.textContent=open?'▸':'▾'; }});});
+    document.querySelectorAll('.nav-item[data-target]').forEach(item => { 
+      item.addEventListener('click', function(event) {
+        // Only proceed if the click wasn't on the progress step indicator
+        if (event.target.classList.contains('progress-step')) {
+          return;
+        }
+        
+        // Get the submenu element
+        const submenu = document.getElementById(this.dataset.target);
+        if (!submenu) return;
+        
+        // Toggle submenu visibility
+        const open = submenu.style.display === 'flex';
+        submenu.style.display = open ? 'none' : 'flex';
+        
+        // Update the arrow - handle both regular and nested span structures
+        const arrow = this.querySelector('span > span') || this.querySelector('span:last-child');
+        if (arrow) {
+          arrow.textContent = open ? '▸' : '▾';
+        }
+      });
+    });
 
     /******************** EXISTING SCREEN ROUTING *************************/
     document.querySelectorAll('[data-screen]').forEach(el => { 
@@ -192,69 +409,151 @@
           // We're in UW mode, preserve the back button
           const companyName = document.getElementById('companyBtn').textContent;
           loadScreenWithCompanyReturn(el.dataset.screen, companyName);
+          
+          // Update progress steps when clicking on a screen
+          updateProgressSteps(el.dataset.screen);
         }
       });
     });
-
-    function loadScreen(screen) { 
-      const main = document.getElementById('mainContent'); 
-      main.innerHTML = ''; 
-      if (screen === 'getStarted') { 
-        renderGetStarted(main);
-      } else { 
-        const h = document.createElement('h1'); 
-        h.textContent = screen.replace(/([A-Z])/g, ' $1'); 
-        h.style.fontSize = '1.25rem'; 
-        main.appendChild(h);
-      } 
+    
+    // For submenu items
+    document.querySelectorAll('.submenu a[data-screen]').forEach(el => {
+      el.addEventListener('click', () => {
+        // Update progress steps when clicking on a submenu screen
+        updateProgressSteps(el.dataset.screen);
+      });
+    });
+    
+    /******************** PROGRESS STEPS FUNCTIONS *************************/
+    // Define the order of steps for the progress indicator
+    const progressSteps = [
+      { id: 'uwDetails', label: 'Underwriting Information', parent: 'uwInfo' },
+      { id: 'dataGathering', label: 'Data gathering', parent: null },
+      { id: 'plLabeling', label: 'P&L Labeling', parent: 'labeling' },
+      { id: 'bsLabeling', label: 'Balance Sheet Labeling', parent: 'labeling' },
+      { id: 'bankLabeling', label: 'Banking Labeling', parent: 'labeling' },
+      { id: 'graphsMetrics', label: 'Graphs & Metrics', parent: 'metricCalc' },
+      { id: 'spendBanking', label: 'Banking Spend', parent: 'spend' },
+      { id: 'spendParker', label: 'Parker Spend', parent: 'spend' },
+      { id: 'scoring', label: 'Scoring', parent: null },
+      { id: 'securities', label: 'Securities', parent: 'decisions' },
+      { id: 'finalDecisions', label: 'Final Decisions', parent: 'decisions' }
+    ];
+    
+    // Initialize the progress bar in the navigation sidebar
+    function initializeProgressBar() {
+      // Only initialize if the navSidebar is visible
+      if (document.getElementById('navSidebar').style.display !== 'flex') return;
+      
+      // Add progress-sidebar class to the nav element
+      const navElement = document.querySelector('#navSidebar nav');
+      navElement.classList.add('progress-sidebar');
+      
+      // Add progress line
+      const progressLine = document.createElement('div');
+      progressLine.className = 'progress-line';
+      navElement.appendChild(progressLine);
+      
+      // Add progress line for completed steps
+      const progressLineCompleted = document.createElement('div');
+      progressLineCompleted.className = 'progress-line-completed';
+      progressLineCompleted.style.height = '0px';
+      navElement.appendChild(progressLineCompleted);
+      
+      // Add progress step indicators to nav items
+      document.querySelectorAll('#navSidebar .nav-item').forEach(item => {
+        const progressStep = document.createElement('div');
+        progressStep.className = 'progress-step future';
+        item.prepend(progressStep);
+        item.classList.add('future');
+      });
+      
+      // Set the first step as current by default
+      updateProgressSteps('uwDetails');
     }
-
-    /******************** ORIGINAL GET STARTED RENDERER (unchanged) *************************/
-    function renderGetStarted(container, addingToExisting) {
-      // If we're adding to existing content, don't clear the container
-      if (!addingToExisting) {
-        container.innerHTML = '';
-      }
+    
+    // Update progress steps based on current screen
+    function updateProgressSteps(currentScreenId) {
+      // Find the index of the current screen in the progress steps
+      const currentIndex = progressSteps.findIndex(step => step.id === currentScreenId);
+      if (currentIndex === -1) return;
       
-      const contentDiv = document.createElement('div');
-      contentDiv.innerHTML = `<h1>Get Started</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="floatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
-      container.appendChild(contentDiv);
-      
-      const ctx = document.getElementById('floatChart').getContext('2d'); 
-      new Chart(ctx, { 
-        type: 'line', 
-        data: { 
-          labels: Array.from({length: 30}, (_, i) => `Day ${i+1}`), 
-          datasets: [{ 
-            label: 'Balance', 
-            data: Array.from({length: 30}, () => Math.random()*50+150), 
-            fill: true, 
-            tension: 0.3 
-          }, { 
-            label: 'Spend', 
-            data: Array.from({length: 30}, () => Math.random()*60+50), 
-            tension: 0.3, 
-            borderDash: [5, 5] 
-          }]
-        }, 
-        options: { 
-          responsive: true, 
-          maintainAspectRatio: false, 
-          plugins: { 
-            legend: { 
-              display: false 
-            }
-          }, 
-          scales: { 
-            x: { 
-              display: false 
-            }, 
-            y: { 
-              display: false 
-            }
-          }
+      // Update nav items and progress steps
+      progressSteps.forEach((step, index) => {
+        // Find the corresponding nav item
+        let navItem;
+        
+        if (step.parent) {
+          // For submenu items, we need to mark the parent
+          navItem = document.querySelector(`.nav-item[data-target="${step.parent}"]`);
+        } else {
+          navItem = document.querySelector(`.nav-item[data-screen="${step.id}"]`);
         }
-      }); 
+        
+        if (!navItem) return;
+        
+        // Remove all status classes
+        navItem.classList.remove('completed', 'current', 'future');
+        
+        // Find the progress step
+        const progressStep = navItem.querySelector('.progress-step');
+        if (!progressStep) return;
+        
+        progressStep.classList.remove('completed', 'current', 'future');
+        
+        // Update status based on index
+        if (index < currentIndex) {
+          // Step is completed
+          navItem.classList.add('completed');
+          progressStep.classList.add('completed');
+        } else if (index === currentIndex) {
+          // Step is current
+          navItem.classList.add('current');
+          progressStep.classList.add('current');
+        } else {
+          // Step is in the future
+          navItem.classList.add('future');
+          progressStep.classList.add('future');
+        }
+      });
+      
+      // Update the completed progress line
+      const navElement = document.querySelector('#navSidebar nav');
+      const currentStep = document.querySelector('#navSidebar .nav-item .progress-step.current');
+      
+      if (navElement && currentStep) {
+        const progressLineCompleted = document.querySelector('.progress-line-completed');
+        const stepRect = currentStep.getBoundingClientRect();
+        const navRect = navElement.getBoundingClientRect();
+        
+        // Calculate the height based on the current step's position
+        const height = stepRect.top - navRect.top + (stepRect.height / 2);
+        progressLineCompleted.style.height = `${height}px`;
+      }
+    }
+    
+    function startNewUnderwriting(companyName) {
+      // Hide company overview sidebar
+      document.getElementById('companyOverviewSidebar').style.display = 'none';
+      
+      // Show UW sidebar
+      document.getElementById('navSidebar').style.display = 'flex';
+      
+      // Set company name
+      document.getElementById('companyBtn').textContent = companyName;
+      
+      // Expand the Underwriting Information submenu by default
+      const uwInfoSubmenu = document.getElementById('uwInfo');
+      uwInfoSubmenu.style.display = 'flex';
+      const uwInfoItem = document.querySelector('.nav-item[data-target="uwInfo"]');
+      const arrow = uwInfoItem.querySelector('span:last-child');
+      if (arrow) arrow.textContent = '▾';
+      
+      // Initialize the progress bar
+      initializeProgressBar();
+      
+      // Load dashboard with "Back to Company View" button
+      loadScreenWithCompanyReturn('uwDetails', companyName);
     }
 
     /******************** NEW: UNDERWRITING LIST & FLOW *************************/
@@ -771,6 +1070,9 @@
       const arrow = uwInfoItem.querySelector('span:last-child');
       if (arrow) arrow.textContent = '▾';
       
+      // Initialize the progress bar
+      initializeProgressBar();
+      
       // Load dashboard with "Back to Company View" button
       loadScreenWithCompanyReturn('uwDetails', companyName);
     }
@@ -803,12 +1105,22 @@
         renderNewUnderwriting(main, true); // Pass true to indicate we're adding to existing content
       } else if (screen === 'uwDetails') {
         renderUWDetails(main, companyName);
+      } else if (screen === 'plLabeling') {
+        renderPLLabeling(main);
+      } else if (screen === 'bsLabeling') {
+        renderBSLabeling(main);
+      } else if (screen === 'bankLabeling') {
+        renderBankLabeling(main);
       } else if (screen === 'spendBanking') {
         renderSpendBanking(main, companyName);
       } else if (screen === 'spendParker') {
         renderSpendParker(main, companyName);
       } else if (screen === 'dataGathering') {
         renderDataGathering(main, companyName);
+      } else if (screen === 'scoring') {
+        renderScoring(main);
+      } else if (screen === 'graphsMetrics') {
+        renderGraphsMetrics(main);
       } else {
         const h = document.createElement('h1');
         h.textContent = screen.replace(/([A-Z])/g, ' $1');
@@ -939,10 +1251,10 @@
       }
       
       const contentDiv = document.createElement('div');
-      contentDiv.innerHTML = `<h1>New Underwriting</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="uwFloatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
+      contentDiv.innerHTML = `<h1>New Underwriting</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="floatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
       container.appendChild(contentDiv);
       
-      const ctx = document.getElementById('uwFloatChart').getContext('2d'); 
+      const ctx = document.getElementById('floatChart').getContext('2d'); 
       new Chart(ctx, { 
         type: 'line', 
         data: { 
@@ -988,7 +1300,7 @@
         <div style="margin-bottom: 2rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
             <div style="display: flex; gap: 1rem;">
-              <div>
+          <div>
                 <div style="font-weight: 500; margin-bottom: 0.5rem;">Card type:</div>
                 <div style="position: relative; width: 200px;">
                   <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
@@ -998,8 +1310,8 @@
                   </select>
                   <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
                 </div>
-              </div>
-              <div>
+          </div>
+          <div>
                 <div style="font-weight: 500; margin-bottom: 0.5rem;">Duration:</div>
                 <div style="position: relative; width: 200px;">
                   <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
@@ -1199,11 +1511,12 @@
             legend: {
               display: false
             },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return '$' + context.parsed.y.toLocaleString();
-                }
+            datalabels: {
+              align: 'top',
+              anchor: 'end',
+              color: 'white',
+              formatter: function(value) {
+                return value.toLocaleString();
               }
             }
           }
@@ -1630,7 +1943,7 @@
         }
       });
     }
-    
+
     /******************** STARTUP: show list first *************************/
     document.addEventListener('DOMContentLoaded',()=>{
       const main = document.getElementById('mainContent');
@@ -1647,6 +1960,837 @@
         });
       });
     });
+
+    /******************** DATA GATHERING RENDERER *************************/
+    function renderDataGathering(container, companyName) {
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Data Gathering</h1>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+          <!-- Source Readiness Section -->
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Readiness</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Banking Data</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
+                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Today, 09:24 AM</div>
+                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
+                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
+                    <span style="color: #1ab394; font-size: 18px;">✓</span>
+                  </span>
+                </div>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Accounting Data</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
+                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Today, 08:15 AM</div>
+                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
+                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
+                    <span style="color: #1ab394; font-size: 18px;">✓</span>
+                  </span>
+                </div>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Payment Processor</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
+                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Yesterday, 11:30 PM</div>
+                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
+                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
+                    <span style="color: #1ab394; font-size: 18px;">✓</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; line-height: 1.5;">
+              <p style="margin-bottom: 1rem;">All data sources are successfully connected and providing up-to-date information. There are no connectivity issues to address at this time.</p>
+              <p>The following data sources are active:</p>
+              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Banking: Chase Business Complete Banking (connected via Plaid)</li>
+                <li>Accounting: QuickBooks Online (direct API integration)</li>
+                <li>Payment Processor: Stripe (direct API integration)</li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Source Completeness Section -->
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Completeness</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Banking Data Completeness</span>
+                  <span>98%</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+                  <div style="width: 98%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Accounting Data Completeness</span>
+                  <span>92%</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+                  <div style="width: 92%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Payment Processor Data Completeness</span>
+                  <span>100%</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+                  <div style="width: 100%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
+                </div>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Missing Data</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <th style="text-align: left; padding: 0.5rem 0;">Data Source</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Missing Elements</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Impact</th>
+              </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Banking</td>
+                      <td style="padding: 0.5rem 0;">2 months historical data (2022)</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Low</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Accounting</td>
+                      <td style="padding: 0.5rem 0;">Some expense categorizations</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Medium</span></td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Payment Processor</td>
+                      <td style="padding: 0.5rem 0;">None</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #1ab394;">None</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; line-height: 1.5;">
+              <p style="margin-bottom: 1rem;">Overall data completeness is at <strong>96.67%</strong>, which exceeds the minimum threshold of 90% required for accurate analysis.</p>
+              <p>The following actions are recommended to improve data completeness:</p>
+              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Request additional historical banking data from the client for the missing 2022 months</li>
+                <li>Work with the accounting team to properly categorize remaining uncategorized expenses</li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Source Consistency Section -->
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Consistency</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--muted);">Monthly Reconciliation Status</h3>
+                <canvas id="reconciliationChart" height="220"></canvas>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Consistency Issues</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <th style="text-align: left; padding: 0.5rem 0;">Issue Type</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Count</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Severity</th>
+              </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Revenue Discrepancies</td>
+                      <td style="padding: 0.5rem 0;">2</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Medium</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Timing Differences</td>
+                      <td style="padding: 0.5rem 0;">5</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #1ab394;">Low</span></td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Missing Transactions</td>
+                      <td style="padding: 0.5rem 0;">1</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #ed5565;">High</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <div style="margin-top: 1.5rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Overall Consistency Score</span>
+                    <span>89%</span>
+                  </div>
+                  <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px;">
+                    <div style="width: 89%; height: 100%; background: #f8ac59; border-radius: 4px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; line-height: 1.5;">
+              <p style="margin-bottom: 1rem;">Data consistency across sources has a score of <strong>89%</strong>, which is slightly below the ideal threshold of 95%. The main issues are related to revenue recognition timing between accounting and payment processor systems.</p>
+              <p>The following actions are recommended to improve data consistency:</p>
+              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Investigate the high-severity missing transaction from January 2024 ($15,230)</li>
+                <li>Reconcile the revenue discrepancies between QuickBooks and Stripe for February and March 2024</li>
+                <li>Document the acceptable timing differences for month-end processing</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Create reconciliation chart after DOM is loaded
+      setTimeout(() => {
+        createReconciliationChart();
+      }, 100);
+    }
+    
+    function createReconciliationChart() {
+      const ctx = document.getElementById('reconciliationChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 12; i++) {
+        const date = new Date(2023, i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Generate random data between 80 and 100 for reconciliation percentages
+      const reconciliationData = [98, 97, 95, 92, 94, 96, 98, 99, 97, 94, 89, 91];
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [{
+            label: 'Reconciliation %',
+            data: reconciliationData,
+            fill: false,
+            borderColor: '#1ab394',
+            backgroundColor: '#1ab394',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              min: 80,
+              max: 100,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+    
+    /******************** SPEND BANKING RENDERER *************************/
+    function renderSpendBanking(container, companyName) {
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Banking Analysis</h1>
+        
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Label:</div>
+              <div style="display: flex; align-items: center;">
+                <div style="width: 200px;">Transaction Merchant vs Description:</div>
+                <div style="position: relative; width: 200px;">
+                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                    <option selected>Merchant</option>
+                    <option>Description</option>
+                  </select>
+                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Dates:</div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" value="11/1/2023" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                <input type="text" value="4/30/2025" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Banking - Cash Based P&L</h2>
+            <canvas id="cashFlowChart"></canvas>
+          </div>
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Banking - Expenses</h2>
+            <canvas id="expensesChart"></canvas>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Label Selected</h2>
+            <canvas id="labelSelectedChart"></canvas>
+          </div>
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Detail of label (largest 20 amounts)</h2>
+            <canvas id="detailLabelChart"></canvas>
+          </div>
+        </div>
+        
+        <div style="margin-top: 2rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">SUM</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">Merchant / transaction detail</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2023-11-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2023-12-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-01-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-02-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-03-01</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">7,019,532</td>
+                <td style="padding: 0.75rem;">Amazon</td>
+                <td style="padding: 0.75rem;">359,440</td>
+                <td style="padding: 0.75rem;">447,329</td>
+                <td style="padding: 0.75rem;">358,263</td>
+                <td style="padding: 0.75rem;">246,078</td>
+                <td style="padding: 0.75rem;">259,732</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">3,670,000</td>
+                <td style="padding: 0.75rem;">Humancentric Ven</td>
+                <td style="padding: 0.75rem;">810,000</td>
+                <td style="padding: 0.75rem;">1,000,000</td>
+                <td style="padding: 0.75rem;">930,000</td>
+                <td style="padding: 0.75rem;">840,000</td>
+                <td style="padding: 0.75rem;">90,000</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">1,250,000</td>
+                <td style="padding: 0.75rem;">Currency Cloud</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">100,000</td>
+                <td style="padding: 0.75rem;">400,000</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">1,096,879</td>
+                <td style="padding: 0.75rem;">Kanter</td>
+                <td style="padding: 0.75rem;">50,604</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">170,781</td>
+                <td style="padding: 0.75rem;">51,520</td>
+                <td style="padding: 0.75rem;">77,527</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Create charts
+      setTimeout(() => {
+        createCashFlowChart();
+        createExpensesChart();
+        createLabelSelectedChart();
+        createDetailLabelChart();
+      }, 100);
+    }
+    
+    function createCashFlowChart() {
+      const ctx = document.getElementById('cashFlowChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 18; i++) {
+        const date = new Date(2023, 3 + i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Generate random data
+      const revenueData = months.map(() => Math.random() * 200000);
+      const specialInflowsData = months.map(() => Math.random() * 100000);
+      const equityData = months.map(() => Math.random() * 150000);
+      const debtInvestmentData = months.map(() => Math.random() * -150000);
+      const specialOutflowsData = months.map(() => Math.random() * -100000);
+      const reconciledIntrasCompanyData = months.map(() => Math.random() * 150000);
+      const unreconciledIntrasCompanyData = months.map(() => Math.random() * 120000);
+      const debtRepaymentData = months.map(() => Math.random() * -100000);
+      const investmentData = months.map(() => Math.random() * -120000);
+      const totalExpensesData = months.map(() => Math.random() * -200000);
+      
+      // Generate line data (total and operating cashflow)
+      const totalCashflowData = months.map(() => Math.random() * 200000 - 100000);
+      const operatingCashflowData = months.map(() => Math.random() * 250000 - 100000);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Revenue',
+              data: revenueData,
+              backgroundColor: '#4a89dc',
+              order: 2
+            },
+            {
+              label: 'Special inflows',
+              data: specialInflowsData,
+              backgroundColor: '#5d9cec',
+              order: 2
+            },
+            {
+              label: 'Equity',
+              data: equityData,
+              backgroundColor: '#a0d468',
+              order: 2
+            },
+            {
+              label: 'Debt Investment',
+              data: debtInvestmentData,
+              backgroundColor: '#da4453',
+              order: 2
+            },
+            {
+              label: 'Special outflows',
+              data: specialOutflowsData,
+              backgroundColor: '#ed5565',
+              order: 2
+            },
+            {
+              label: 'Reconciled Intra company',
+              data: reconciledIntrasCompanyData,
+              backgroundColor: '#8cc152',
+              order: 2
+            },
+            {
+              label: 'Unreconciled Intra company',
+              data: unreconciledIntrasCompanyData,
+              backgroundColor: '#ccd1d9',
+              order: 2
+            },
+            {
+              label: 'Debt Repayment',
+              data: debtRepaymentData,
+              backgroundColor: '#fc6e51',
+              order: 2
+            },
+            {
+              label: 'Investment',
+              data: investmentData,
+              backgroundColor: '#f6bb42',
+              order: 2
+            },
+            {
+              label: 'Total Expenses',
+              data: totalExpensesData,
+              backgroundColor: '#37bc9b',
+              order: 2
+            },
+            {
+              label: 'Total Cashflow',
+              data: totalCashflowData,
+              type: 'line',
+              borderColor: '#000',
+              borderWidth: 2,
+              pointRadius: 0,
+              borderDash: [5, 5],
+              fill: false,
+              order: 1
+            },
+            {
+              label: 'Op. Cashflow',
+              data: operatingCashflowData,
+              type: 'line',
+              borderColor: '#3b5bdb',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: false,
+              order: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value / 1000 + 'K';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createExpensesChart() {
+      const ctx = document.getElementById('expensesChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 18; i++) {
+        const date = new Date(2023, 3 + i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Generate random data for expense categories
+      const checkDepositsData = months.map(() => Math.random() * -20000);
+      const refundsData = months.map(() => Math.random() * -25000);
+      const overdraftData = months.map(() => Math.random() * -15000);
+      const chargesFeesData = months.map(() => Math.random() * -30000);
+      const advertisingData = months.map(() => Math.random() * -40000);
+      const travelData = months.map(() => Math.random() * -20000);
+      const utilitiesData = months.map(() => Math.random() * -15000);
+      const checkOutflowsData = months.map(() => Math.random() * -35000);
+      const atmCashOutflowsData = months.map(() => Math.random() * -10000);
+      const rentData = months.map(() => Math.random() * -50000);
+      const p2pTransfersData = months.map(() => Math.random() * -45000);
+      const softwareData = months.map(() => Math.random() * -20000);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Check Deposits',
+              data: checkDepositsData,
+              backgroundColor: '#f5f7fa',
+              order: 2
+            },
+            {
+              label: 'Refunds',
+              data: refundsData,
+              backgroundColor: '#ccd1d9',
+              order: 2
+            },
+            {
+              label: 'Overdraft/NSF Fees',
+              data: overdraftData,
+              backgroundColor: '#f6bb42',
+              order: 2
+            },
+            {
+              label: 'Charges/Fees',
+              data: chargesFeesData,
+              backgroundColor: '#5d9cec',
+              order: 2
+            },
+            {
+              label: 'Advertising',
+              data: advertisingData,
+              backgroundColor: '#fc6e51',
+              order: 2
+            },
+            {
+              label: 'Travel',
+              data: travelData,
+              backgroundColor: '#a0d468',
+              order: 2
+            },
+            {
+              label: 'Utilities',
+              data: utilitiesData,
+              backgroundColor: '#ffce54',
+              order: 2
+            },
+            {
+              label: 'Check Outflows',
+              data: checkOutflowsData,
+              backgroundColor: '#ac92ec',
+              order: 2
+            },
+            {
+              label: 'ATM Cash Outflows',
+              data: atmCashOutflowsData,
+              backgroundColor: '#ec87c0',
+              order: 2
+            },
+            {
+              label: 'Rent',
+              data: rentData,
+              backgroundColor: '#48cfad',
+              order: 2
+            },
+            {
+              label: 'P2P Transfers',
+              data: p2pTransfersData,
+              backgroundColor: '#4fc1e9',
+              order: 2
+            },
+            {
+              label: 'Software',
+              data: softwareData,
+              backgroundColor: '#8cc152',
+              order: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value / 1000 + 'K';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createLabelSelectedChart() {
+      const ctx = document.getElementById('labelSelectedChart').getContext('2d');
+      
+      // Generate quarters for labels
+      const quarters = [
+        '2023-Q3', '2023-Q4', '2024-Q1', '2024-Q2', '2024-Q3', '2024-Q4', 
+        '2024-Q5', '2024-Q6', '2024-Q7', '2024-Q8', '2024-Q9', '2024-Q10',
+        '2024-Q11', '2024-Q12', '2025-Q1'
+      ];
+      
+      // Mock data with specific values to match screenshot
+      const data = [
+        89395, 117543, 74696, 88861, 81595, 121135, 98432, 106669, 
+        142849, 103539, 84851, 111108, 87951
+      ];
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: quarters,
+          datasets: [{
+            label: 'Label Selected',
+            data: data,
+            backgroundColor: '#4a89dc',
+            barPercentage: 0.6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value.toLocaleString();
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            datalabels: {
+              align: 'top',
+              anchor: 'end',
+              color: 'white',
+              formatter: function(value) {
+                return value.toLocaleString();
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createDetailLabelChart() {
+      const ctx = document.getElementById('detailLabelChart').getContext('2d');
+      
+      // Generate quarters for labels
+      const quarters = [
+        '2023-11', '2023-12', '2024-01', '2024-02', '2024-03', '2024-04', 
+        '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10',
+        '2024-11', '2024-12', '2025-01'
+      ];
+      
+      // Generate multiple mock datasets with specific values
+      const dataset1 = quarters.map(() => Math.random() * 400000 + 100000);
+      const dataset2 = quarters.map(() => Math.random() * 300000 + 100000);
+      const dataset3 = quarters.map(() => Math.random() * 200000 + 50000);
+      const dataset4 = quarters.map(() => Math.random() * 100000 + 50000);
+      const dataset5 = quarters.map(() => Math.random() * 150000 + 50000);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: quarters,
+          datasets: [
+            {
+              label: 'Amazon',
+              data: dataset1,
+              backgroundColor: '#da4453',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Humancentric',
+              data: dataset2,
+              backgroundColor: '#4a89dc',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Currency Cloud',
+              data: dataset3,
+              backgroundColor: '#f6bb42',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Kanter',
+              data: dataset4,
+              backgroundColor: '#8cc152',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Others',
+              data: dataset5,
+              backgroundColor: '#967adc',
+              stack: 'Stack 0'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return (value / 1000000).toFixed(1) + 'M';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 12,
+                padding: 8,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
 
     /******************** DATA GATHERING RENDERER *************************/
     function renderDataGathering(container, companyName) {
@@ -1904,9 +3048,2643 @@
         }
       });
     }
+    
+    /******************** SPEND BANKING RENDERER *************************/
+    function renderSpendBanking(container, companyName) {
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Banking Analysis</h1>
+        
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Label:</div>
+              <div style="display: flex; align-items: center;">
+                <div style="width: 200px;">Transaction Merchant vs Description:</div>
+                <div style="position: relative; width: 200px;">
+                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                    <option selected>Merchant</option>
+                    <option>Description</option>
+                  </select>
+                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Dates:</div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" value="11/1/2023" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                <input type="text" value="4/30/2025" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Banking - Cash Based P&L</h2>
+            <canvas id="cashFlowChart"></canvas>
+          </div>
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Banking - Expenses</h2>
+            <canvas id="expensesChart"></canvas>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Label Selected</h2>
+            <canvas id="labelSelectedChart"></canvas>
+          </div>
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Detail of label (largest 20 amounts)</h2>
+            <canvas id="detailLabelChart"></canvas>
+          </div>
+        </div>
+        
+        <div style="margin-top: 2rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">SUM</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">Merchant / transaction detail</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2023-11-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2023-12-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-01-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-02-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-03-01</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">7,019,532</td>
+                <td style="padding: 0.75rem;">Amazon</td>
+                <td style="padding: 0.75rem;">359,440</td>
+                <td style="padding: 0.75rem;">447,329</td>
+                <td style="padding: 0.75rem;">358,263</td>
+                <td style="padding: 0.75rem;">246,078</td>
+                <td style="padding: 0.75rem;">259,732</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">3,670,000</td>
+                <td style="padding: 0.75rem;">Humancentric Ven</td>
+                <td style="padding: 0.75rem;">810,000</td>
+                <td style="padding: 0.75rem;">1,000,000</td>
+                <td style="padding: 0.75rem;">930,000</td>
+                <td style="padding: 0.75rem;">840,000</td>
+                <td style="padding: 0.75rem;">90,000</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">1,250,000</td>
+                <td style="padding: 0.75rem;">Currency Cloud</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">100,000</td>
+                <td style="padding: 0.75rem;">400,000</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">1,096,879</td>
+                <td style="padding: 0.75rem;">Kanter</td>
+                <td style="padding: 0.75rem;">50,604</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">170,781</td>
+                <td style="padding: 0.75rem;">51,520</td>
+                <td style="padding: 0.75rem;">77,527</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Create charts
+      setTimeout(() => {
+        createCashFlowChart();
+        createExpensesChart();
+        createLabelSelectedChart();
+        createDetailLabelChart();
+      }, 100);
+    }
+    
+    function createCashFlowChart() {
+      const ctx = document.getElementById('cashFlowChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 18; i++) {
+        const date = new Date(2023, 3 + i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Generate random data
+      const revenueData = months.map(() => Math.random() * 200000);
+      const specialInflowsData = months.map(() => Math.random() * 100000);
+      const equityData = months.map(() => Math.random() * 150000);
+      const debtInvestmentData = months.map(() => Math.random() * -150000);
+      const specialOutflowsData = months.map(() => Math.random() * -100000);
+      const reconciledIntrasCompanyData = months.map(() => Math.random() * 150000);
+      const unreconciledIntrasCompanyData = months.map(() => Math.random() * 120000);
+      const debtRepaymentData = months.map(() => Math.random() * -100000);
+      const investmentData = months.map(() => Math.random() * -120000);
+      const totalExpensesData = months.map(() => Math.random() * -200000);
+      
+      // Generate line data (total and operating cashflow)
+      const totalCashflowData = months.map(() => Math.random() * 200000 - 100000);
+      const operatingCashflowData = months.map(() => Math.random() * 250000 - 100000);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Revenue',
+              data: revenueData,
+              backgroundColor: '#4a89dc',
+              order: 2
+            },
+            {
+              label: 'Special inflows',
+              data: specialInflowsData,
+              backgroundColor: '#5d9cec',
+              order: 2
+            },
+            {
+              label: 'Equity',
+              data: equityData,
+              backgroundColor: '#a0d468',
+              order: 2
+            },
+            {
+              label: 'Debt Investment',
+              data: debtInvestmentData,
+              backgroundColor: '#da4453',
+              order: 2
+            },
+            {
+              label: 'Special outflows',
+              data: specialOutflowsData,
+              backgroundColor: '#ed5565',
+              order: 2
+            },
+            {
+              label: 'Reconciled Intra company',
+              data: reconciledIntrasCompanyData,
+              backgroundColor: '#8cc152',
+              order: 2
+            },
+            {
+              label: 'Unreconciled Intra company',
+              data: unreconciledIntrasCompanyData,
+              backgroundColor: '#ccd1d9',
+              order: 2
+            },
+            {
+              label: 'Debt Repayment',
+              data: debtRepaymentData,
+              backgroundColor: '#fc6e51',
+              order: 2
+            },
+            {
+              label: 'Investment',
+              data: investmentData,
+              backgroundColor: '#f6bb42',
+              order: 2
+            },
+            {
+              label: 'Total Expenses',
+              data: totalExpensesData,
+              backgroundColor: '#37bc9b',
+              order: 2
+            },
+            {
+              label: 'Total Cashflow',
+              data: totalCashflowData,
+              type: 'line',
+              borderColor: '#000',
+              borderWidth: 2,
+              pointRadius: 0,
+              borderDash: [5, 5],
+              fill: false,
+              order: 1
+            },
+            {
+              label: 'Op. Cashflow',
+              data: operatingCashflowData,
+              type: 'line',
+              borderColor: '#3b5bdb',
+              borderWidth: 2,
+              pointRadius: 0,
+              fill: false,
+              order: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value / 1000 + 'K';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createExpensesChart() {
+      const ctx = document.getElementById('expensesChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 18; i++) {
+        const date = new Date(2023, 3 + i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Generate random data for expense categories
+      const checkDepositsData = months.map(() => Math.random() * -20000);
+      const refundsData = months.map(() => Math.random() * -25000);
+      const overdraftData = months.map(() => Math.random() * -15000);
+      const chargesFeesData = months.map(() => Math.random() * -30000);
+      const advertisingData = months.map(() => Math.random() * -40000);
+      const travelData = months.map(() => Math.random() * -20000);
+      const utilitiesData = months.map(() => Math.random() * -15000);
+      const checkOutflowsData = months.map(() => Math.random() * -35000);
+      const atmCashOutflowsData = months.map(() => Math.random() * -10000);
+      const rentData = months.map(() => Math.random() * -50000);
+      const p2pTransfersData = months.map(() => Math.random() * -45000);
+      const softwareData = months.map(() => Math.random() * -20000);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Check Deposits',
+              data: checkDepositsData,
+              backgroundColor: '#f5f7fa',
+              order: 2
+            },
+            {
+              label: 'Refunds',
+              data: refundsData,
+              backgroundColor: '#ccd1d9',
+              order: 2
+            },
+            {
+              label: 'Overdraft/NSF Fees',
+              data: overdraftData,
+              backgroundColor: '#f6bb42',
+              order: 2
+            },
+            {
+              label: 'Charges/Fees',
+              data: chargesFeesData,
+              backgroundColor: '#5d9cec',
+              order: 2
+            },
+            {
+              label: 'Advertising',
+              data: advertisingData,
+              backgroundColor: '#fc6e51',
+              order: 2
+            },
+            {
+              label: 'Travel',
+              data: travelData,
+              backgroundColor: '#a0d468',
+              order: 2
+            },
+            {
+              label: 'Utilities',
+              data: utilitiesData,
+              backgroundColor: '#ffce54',
+              order: 2
+            },
+            {
+              label: 'Check Outflows',
+              data: checkOutflowsData,
+              backgroundColor: '#ac92ec',
+              order: 2
+            },
+            {
+              label: 'ATM Cash Outflows',
+              data: atmCashOutflowsData,
+              backgroundColor: '#ec87c0',
+              order: 2
+            },
+            {
+              label: 'Rent',
+              data: rentData,
+              backgroundColor: '#48cfad',
+              order: 2
+            },
+            {
+              label: 'P2P Transfers',
+              data: p2pTransfersData,
+              backgroundColor: '#4fc1e9',
+              order: 2
+            },
+            {
+              label: 'Software',
+              data: softwareData,
+              backgroundColor: '#8cc152',
+              order: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value / 1000 + 'K';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createLabelSelectedChart() {
+      const ctx = document.getElementById('labelSelectedChart').getContext('2d');
+      
+      // Generate quarters for labels
+      const quarters = [
+        '2023-Q3', '2023-Q4', '2024-Q1', '2024-Q2', '2024-Q3', '2024-Q4', 
+        '2024-Q5', '2024-Q6', '2024-Q7', '2024-Q8', '2024-Q9', '2024-Q10',
+        '2024-Q11', '2024-Q12', '2025-Q1'
+      ];
+      
+      // Mock data with specific values to match screenshot
+      const data = [
+        89395, 117543, 74696, 88861, 81595, 121135, 98432, 106669, 
+        142849, 103539, 84851, 111108, 87951
+      ];
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: quarters,
+          datasets: [{
+            label: 'Label Selected',
+            data: data,
+            backgroundColor: '#4a89dc',
+            barPercentage: 0.6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value.toLocaleString();
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            datalabels: {
+              align: 'top',
+              anchor: 'end',
+              color: 'white',
+              formatter: function(value) {
+                return value.toLocaleString();
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createDetailLabelChart() {
+      const ctx = document.getElementById('detailLabelChart').getContext('2d');
+      
+      // Generate quarters for labels
+      const quarters = [
+        '2023-11', '2023-12', '2024-01', '2024-02', '2024-03', '2024-04', 
+        '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10',
+        '2024-11', '2024-12', '2025-01'
+      ];
+      
+      // Generate multiple mock datasets with specific values
+      const dataset1 = quarters.map(() => Math.random() * 400000 + 100000);
+      const dataset2 = quarters.map(() => Math.random() * 300000 + 100000);
+      const dataset3 = quarters.map(() => Math.random() * 200000 + 50000);
+      const dataset4 = quarters.map(() => Math.random() * 100000 + 50000);
+      const dataset5 = quarters.map(() => Math.random() * 150000 + 50000);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: quarters,
+          datasets: [
+            {
+              label: 'Amazon',
+              data: dataset1,
+              backgroundColor: '#da4453',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Humancentric',
+              data: dataset2,
+              backgroundColor: '#4a89dc',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Currency Cloud',
+              data: dataset3,
+              backgroundColor: '#f6bb42',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Kanter',
+              data: dataset4,
+              backgroundColor: '#8cc152',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Others',
+              data: dataset5,
+              backgroundColor: '#967adc',
+              stack: 'Stack 0'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return (value / 1000000).toFixed(1) + 'M';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: true,
+              position: 'right',
+              labels: {
+                boxWidth: 12,
+                padding: 8,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    /******************** NEW: BALANCE SHEET LABELING *************************/
+    function renderBSLabeling(container) {
+      // Create the Balance Sheet Labeling content
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Balance Sheet Labeling</h1>
+        
+        <style>
+           /* Main container */
+           .bs-container {
+             border: 1px solid var(--border);
+             border-radius: 8px;
+             overflow: hidden;
+             background: var(--bg);
+           }
+           
+           /* Table basics */
+           .bs-table {
+             width: 100%;
+             border-collapse: collapse;
+             font-size: 0.85rem;
+           }
+           .bs-table th {
+             padding: 0.75rem;
+             text-align: left;
+             position: sticky;
+             top: 0;
+             background: var(--panel);
+             z-index: 10;
+             border-bottom: 1px solid var(--border);
+           }
+           .bs-table td {
+             padding: 0.75rem;
+             border-bottom: 1px solid var(--border);
+           }
+           
+           /* Level 1 - Top level categories (non-movable) */
+           .bs-level1 {
+             font-weight: 700;
+             font-size: 0.95rem;
+             background: var(--panel);
+             cursor: not-allowed;
+           }
+           .bs-level1 td:first-child {
+             border-left: 3px solid var(--accent);
+           }
+           .bs-level1:hover {
+             background: var(--panel);
+           }
+           
+           /* Level 2 - Subcategories (non-movable) */
+           .bs-level2 {
+             font-weight: 600;
+             background: rgba(26, 26, 26, 0.6);
+             cursor: not-allowed;
+           }
+           .bs-level2 td:first-child {
+             padding-left: 2rem !important;
+             border-left: 2px solid var(--border);
+           }
+           .bs-level2:hover {
+             background: rgba(26, 26, 26, 0.6);
+           }
+           
+           /* Level 3 - Sub-subcategories (non-movable) */
+           .bs-level3 {
+             font-weight: 500;
+             background: rgba(26, 26, 26, 0.4);
+             cursor: not-allowed;
+           }
+           .bs-level3 td:first-child {
+             padding-left: 3.5rem !important;
+             border-left: 1px solid var(--border);
+           }
+           .bs-level3:hover {
+             background: rgba(26, 26, 26, 0.4);
+           }
+           
+           /* Level 4 - Line items (movable) */
+           .bs-level4 {
+             background: transparent;
+           }
+           .bs-level4 td:first-child {
+             padding-left: 5rem !important;
+           }
+           .bs-level4.draggable {
+             cursor: move;
+           }
+           .bs-level4.dragging {
+             opacity: 0.5;
+             background: rgba(255, 104, 51, 0.2);
+           }
+           
+           /* Icons for fixed vs movable */
+           .bs-fixed-icon {
+             color: var(--muted);
+             margin-right: 0.5rem;
+             font-size: 0.8rem;
+           }
+           .bs-drag-icon {
+             color: var(--muted);
+             margin-right: 0.5rem;
+             font-size: 0.8rem;
+           }
+           
+           /* Other styles */
+           .bs-actions {
+             margin-bottom: 1rem;
+             display: flex;
+             justify-content: space-between;
+           }
+           .bs-button {
+             background: var(--panel);
+             border: 1px solid var(--border);
+             color: var(--text);
+             padding: 0.5rem 1rem;
+             border-radius: 4px;
+             cursor: pointer;
+           }
+           .bs-button:hover {
+             background: var(--border);
+           }
+           .bs-button.primary {
+             background: var(--accent);
+             border: 1px solid var(--accent);
+           }
+           .bs-button.primary:hover {
+             background: #ff5820;
+           }
+           .bs-number {
+             text-align: right;
+           }
+           .bs-negative {
+             color: #ed5565;
+           }
+           .bs-positive {
+             color: #1ab394;
+           }
+           .bs-header-row {
+             background: var(--panel) !important;
+           }
+           .dragging-over {
+             border-bottom: 2px solid var(--accent);
+           }
+         </style>
+        
+        <div class="bs-actions">
+          <div>
+            <button class="bs-button">Reset</button>
+            <button class="bs-button">Undo</button>
+          </div>
+          <div>
+            <button class="bs-button primary">Save Changes</button>
+          </div>
+        </div>
+        
+        <div class="bs-container">
+          <table class="bs-table" id="bsTable">
+            <thead>
+              <tr class="bs-header-row">
+                <th style="width: 35%;">Category / Account</th>
+                <th style="width: 9%;">1/31/2023</th>
+                <th style="width: 9%;">2/28/2023</th>
+                <th style="width: 9%;">3/31/2023</th>
+                <th style="width: 9%;">4/30/2023</th>
+                <th style="width: 9%;">5/31/2023</th>
+                <th style="width: 9%;">6/30/2023</th>
+                <th style="width: 11%;">7/31/2023</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Level 1 - Assets -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Assets</td>
+                <td class="bs-number">$425,000</td>
+                <td class="bs-number">$405,000</td>
+                <td class="bs-number">$385,000</td>
+                <td class="bs-number">$365,000</td>
+                <td class="bs-number">$345,000</td>
+                <td class="bs-number">$325,000</td>
+                <td class="bs-number">$305,000</td>
+              </tr>
+              
+              <!-- Level 2 - Current Assets -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Current Assets</td>
+                <td class="bs-number">$225,000</td>
+                <td class="bs-number">$210,000</td>
+                <td class="bs-number">$195,000</td>
+                <td class="bs-number">$180,000</td>
+                <td class="bs-number">$165,000</td>
+                <td class="bs-number">$150,000</td>
+                <td class="bs-number">$135,000</td>
+              </tr>
+              
+              <!-- Level 3 - Cash and Equivalents -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Cash and Cash Equivalents</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$95,000</td>
+                <td class="bs-number">$90,000</td>
+                <td class="bs-number">$85,000</td>
+                <td class="bs-number">$80,000</td>
+                <td class="bs-number">$75,000</td>
+                <td class="bs-number">$70,000</td>
+              </tr>
+              
+              <!-- Level 4 - Cash Items (draggable) -->
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Checking Account</td>
+                <td class="bs-number">$60,000</td>
+                <td class="bs-number">$55,000</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$35,000</td>
+                <td class="bs-number">$30,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Savings Account</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$40,000</td>
+              </tr>
+              
+              <!-- Level 3 - Accounts Receivable -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Accounts Receivable</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$35,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Customer Receivables</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$35,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+              </tr>
+              
+              <!-- Level 3 - Inventory -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Inventory</td>
+                <td class="bs-number">$75,000</td>
+                <td class="bs-number">$70,000</td>
+                <td class="bs-number">$65,000</td>
+                <td class="bs-number">$60,000</td>
+                <td class="bs-number">$55,000</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$45,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Raw Materials</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$28,000</td>
+                <td class="bs-number">$26,000</td>
+                <td class="bs-number">$24,000</td>
+                <td class="bs-number">$22,000</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$18,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Finished Goods</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$42,000</td>
+                <td class="bs-number">$39,000</td>
+                <td class="bs-number">$36,000</td>
+                <td class="bs-number">$33,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$27,000</td>
+              </tr>
+              
+              <!-- Level 2 - Non-Current Assets -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Non-Current Assets</td>
+                <td class="bs-number">$200,000</td>
+                <td class="bs-number">$195,000</td>
+                <td class="bs-number">$190,000</td>
+                <td class="bs-number">$185,000</td>
+                <td class="bs-number">$180,000</td>
+                <td class="bs-number">$175,000</td>
+                <td class="bs-number">$170,000</td>
+              </tr>
+              
+              <!-- Level 3 - Property, Plant, Equipment -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Property, Plant, and Equipment</td>
+                <td class="bs-number">$200,000</td>
+                <td class="bs-number">$195,000</td>
+                <td class="bs-number">$190,000</td>
+                <td class="bs-number">$185,000</td>
+                <td class="bs-number">$180,000</td>
+                <td class="bs-number">$175,000</td>
+                <td class="bs-number">$170,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Building</td>
+                <td class="bs-number">$120,000</td>
+                <td class="bs-number">$118,000</td>
+                <td class="bs-number">$116,000</td>
+                <td class="bs-number">$114,000</td>
+                <td class="bs-number">$112,000</td>
+                <td class="bs-number">$110,000</td>
+                <td class="bs-number">$108,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Equipment</td>
+                <td class="bs-number">$80,000</td>
+                <td class="bs-number">$77,000</td>
+                <td class="bs-number">$74,000</td>
+                <td class="bs-number">$71,000</td>
+                <td class="bs-number">$68,000</td>
+                <td class="bs-number">$65,000</td>
+                <td class="bs-number">$62,000</td>
+              </tr>
+              
+              <!-- Level 1 - Liabilities -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Liabilities</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$85,000</td>
+                <td class="bs-number">$70,000</td>
+                <td class="bs-number">$55,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$10,000</td>
+              </tr>
+              
+              <!-- Level 2 - Current Liabilities -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Current Liabilities</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$0</td>
+              </tr>
+              
+              <!-- Level 3 - Accounts Payable -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Accounts Payable</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$0</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Supplier Payables</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$0</td>
+              </tr>
+              
+              <!-- Level 3 - Short-term Debt -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Short-Term Debt</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$0</td>
+                <td class="bs-number">$0</td>
+                <td class="bs-number">$0</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Credit Line</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$0</td>
+                <td class="bs-number">$0</td>
+                <td class="bs-number">$0</td>
+              </tr>
+              
+              <!-- Level 2 - Non-Current Liabilities -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Non-Current Liabilities</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$35,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+              </tr>
+              
+              <!-- Level 3 - Long-term Debt -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Long-Term Debt</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$35,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Mortgage</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$35,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+              </tr>
+              
+              <!-- Level 1 - Equity -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Equity</td>
+                <td class="bs-number">$225,000</td>
+                <td class="bs-number">$220,000</td>
+                <td class="bs-number">$215,000</td>
+                <td class="bs-number">$210,000</td>
+                <td class="bs-number">$205,000</td>
+                <td class="bs-number">$200,000</td>
+                <td class="bs-number">$195,000</td>
+              </tr>
+              
+              <!-- Level 2 - Paid-in Capital -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Paid-in Capital</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+              </tr>
+              
+              <!-- Level 3 - Common Stock -->
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Common Stock</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Founder Shares</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+              </tr>
+              
+              <!-- Level 2 - Retained Earnings -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Retained Earnings</td>
+                <td class="bs-number">$125,000</td>
+                <td class="bs-number">$120,000</td>
+                <td class="bs-number">$115,000</td>
+                <td class="bs-number">$110,000</td>
+                <td class="bs-number">$105,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$95,000</td>
+              </tr>
+              
+              <tr class="bs-level3">
+                <td><span class="bs-fixed-icon">📌</span>Accumulated Profit</td>
+                <td class="bs-number">$125,000</td>
+                <td class="bs-number">$120,000</td>
+                <td class="bs-number">$115,000</td>
+                <td class="bs-number">$110,000</td>
+                <td class="bs-number">$105,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$95,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Current Year Earnings</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$0</td>
+                <td class="bs-number">-$5,000</td>
+              </tr>
+              
+              <tr class="bs-level4 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Previous Years Earnings</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$100,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Add drag and drop functionality
+      setupDragAndDrop('bsTable');
+    }
+
+    /******************** P&L LABELING RENDERER *************************/
+    function renderPLLabeling(container) {
+      // Create the P&L Labeling content
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Profit & Loss Labeling</h1>
+        
+        <div style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
+          <div>
+            <button class="bs-button">Reset</button>
+            <button class="bs-button">Undo</button>
+          </div>
+          <div>
+            <button class="bs-button primary">Save Changes</button>
+          </div>
+        </div>
+        
+        <div class="bs-container">
+          <table class="bs-table" id="plTable">
+            <thead>
+              <tr class="bs-header-row">
+                <th style="width: 35%;">Category / Account</th>
+                <th style="width: 9%;">1/31/2023</th>
+                <th style="width: 9%;">2/28/2023</th>
+                <th style="width: 9%;">3/31/2023</th>
+                <th style="width: 9%;">4/30/2023</th>
+                <th style="width: 9%;">5/31/2023</th>
+                <th style="width: 9%;">6/30/2023</th>
+                <th style="width: 11%;">7/31/2023</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Level 1 -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Revenue</td>
+                <td class="bs-number">$150,000</td>
+                <td class="bs-number">$160,000</td>
+                <td class="bs-number">$155,000</td>
+                <td class="bs-number">$165,000</td>
+                <td class="bs-number">$170,000</td>
+                <td class="bs-number">$175,000</td>
+                <td class="bs-number">$180,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Product Revenue</td>
+                <td class="bs-number">$120,000</td>
+                <td class="bs-number">$130,000</td>
+                <td class="bs-number">$125,000</td>
+                <td class="bs-number">$135,000</td>
+                <td class="bs-number">$140,000</td>
+                <td class="bs-number">$145,000</td>
+                <td class="bs-number">$150,000</td>
+              </tr>
+              
+              <!-- Level 3 - Draggable items -->
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Product A</td>
+                <td class="bs-number">$70,000</td>
+                <td class="bs-number">$75,000</td>
+                <td class="bs-number">$73,000</td>
+                <td class="bs-number">$77,000</td>
+                <td class="bs-number">$80,000</td>
+                <td class="bs-number">$83,000</td>
+                <td class="bs-number">$85,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Product B</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$55,000</td>
+                <td class="bs-number">$52,000</td>
+                <td class="bs-number">$58,000</td>
+                <td class="bs-number">$60,000</td>
+                <td class="bs-number">$62,000</td>
+                <td class="bs-number">$65,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Service Revenue</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Consulting</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Maintenance</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+              </tr>
+              
+              <!-- Level 1 -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Expenses</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$105,000</td>
+                <td class="bs-number">$103,000</td>
+                <td class="bs-number">$107,000</td>
+                <td class="bs-number">$110,000</td>
+                <td class="bs-number">$112,000</td>
+                <td class="bs-number">$115,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Cost of Goods Sold</td>
+                <td class="bs-number">$60,000</td>
+                <td class="bs-number">$63,000</td>
+                <td class="bs-number">$62,000</td>
+                <td class="bs-number">$64,000</td>
+                <td class="bs-number">$66,000</td>
+                <td class="bs-number">$67,000</td>
+                <td class="bs-number">$69,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Materials</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$42,000</td>
+                <td class="bs-number">$41,000</td>
+                <td class="bs-number">$43,000</td>
+                <td class="bs-number">$44,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$46,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Labor</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$21,000</td>
+                <td class="bs-number">$21,000</td>
+                <td class="bs-number">$21,000</td>
+                <td class="bs-number">$22,000</td>
+                <td class="bs-number">$22,000</td>
+                <td class="bs-number">$23,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Operating Expenses</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$42,000</td>
+                <td class="bs-number">$41,000</td>
+                <td class="bs-number">$43,000</td>
+                <td class="bs-number">$44,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$46,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Salaries</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$26,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$26,000</td>
+                <td class="bs-number">$27,000</td>
+                <td class="bs-number">$27,000</td>
+                <td class="bs-number">$28,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Rent</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$11,000</td>
+                <td class="bs-number">$11,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Utilities</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$6,000</td>
+                <td class="bs-number">$6,000</td>
+                <td class="bs-number">$7,000</td>
+                <td class="bs-number">$7,000</td>
+                <td class="bs-number">$7,000</td>
+                <td class="bs-number">$7,000</td>
+              </tr>
+              
+              <!-- Level 1 -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Net Income</td>
+                <td class="bs-number bs-positive">$50,000</td>
+                <td class="bs-number bs-positive">$55,000</td>
+                <td class="bs-number bs-positive">$52,000</td>
+                <td class="bs-number bs-positive">$58,000</td>
+                <td class="bs-number bs-positive">$60,000</td>
+                <td class="bs-number bs-positive">$63,000</td>
+                <td class="bs-number bs-positive">$65,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Add drag and drop functionality
+      setupDragAndDrop('plTable');
+    }
+
+    /******************** DRAG AND DROP FUNCTIONALITY *************************/
+    function setupDragAndDrop(tableId) {
+      const table = document.getElementById(tableId);
+      if (!table) return;
+      
+      let draggedItem = null;
+      
+      // Get all draggable rows
+      const draggableRows = table.querySelectorAll('.draggable');
+      
+      // Add drag events to draggable rows
+      draggableRows.forEach(row => {
+        row.addEventListener('dragstart', function() {
+          draggedItem = this;
+          setTimeout(() => this.classList.add('dragging'), 0);
+        });
+        
+        row.addEventListener('dragend', function() {
+          this.classList.remove('dragging');
+          draggedItem = null;
+          
+          // Remove all dragover classes
+          table.querySelectorAll('.dragging-over').forEach(item => {
+            item.classList.remove('dragging-over');
+          });
+        });
+      });
+      
+      // Add drag events to potential drop targets
+      draggableRows.forEach(row => {
+        row.addEventListener('dragover', function(e) {
+          e.preventDefault();
+          if (draggedItem === this) return;
+          this.classList.add('dragging-over');
+        });
+        
+        row.addEventListener('dragleave', function() {
+          this.classList.remove('dragging-over');
+        });
+        
+        row.addEventListener('drop', function(e) {
+          e.preventDefault();
+          if (draggedItem === this) return;
+          
+          // Get the parent sections of both rows
+          const draggedParent = getParentSection(draggedItem);
+          const dropParent = getParentSection(this);
+          
+          // Only allow dropping if both are in the same section
+          if (draggedParent && dropParent && draggedParent === dropParent) {
+            // Insert the dragged row before or after the drop target based on position
+            const rect = this.getBoundingClientRect();
+            const midpoint = rect.top + rect.height / 2;
+            
+            if (e.clientY < midpoint) {
+              this.parentNode.insertBefore(draggedItem, this);
+            } else {
+              this.parentNode.insertBefore(draggedItem, this.nextSibling);
+            }
+          }
+          
+          this.classList.remove('dragging-over');
+        });
+      });
+      
+      // Helper function to find parent section (level2)
+      function getParentSection(row) {
+        let current = row.previousElementSibling;
+        while (current) {
+          if (current.classList.contains('bs-level2')) {
+            return current;
+          }
+          current = current.previousElementSibling;
+        }
+        return null;
+      }
+    }
+
+    /******************** INITIALIZE APPLICATION *************************/
+    // Initialize the app when DOM is loaded
+    document.addEventListener('DOMContentLoaded', () => {
+      const main = document.getElementById('mainContent');
+      renderUnderwritingList(main);
+      
+      // Add back button click handlers
+      document.getElementById('backBtn').addEventListener('click', goBackToList);
+      document.getElementById('backToListBtn').addEventListener('click', goBackToList);
+      
+      // Add company screen navigation click handlers
+      document.querySelectorAll('[data-company-screen]').forEach(item => {
+        item.addEventListener('click', () => {
+          loadCompanyScreen(item.dataset.companyScreen);
+        });
+      });
+    });
+
+    /******************** BANKING LABELING RENDERER *************************/
+    function renderBankLabeling(container) {
+      // Create the Banking Labeling content
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Banking Labeling</h1>
+        
+        <div style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
+          <div>
+            <button class="bs-button">Reset</button>
+            <button class="bs-button">Undo</button>
+          </div>
+          <div>
+            <button class="bs-button primary">Save Changes</button>
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 1rem;">
+          <div style="display: flex; gap: 1rem; align-items: center; margin-bottom: 0.5rem;">
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Date Range:</div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" value="01/01/2023" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                <input type="text" value="07/31/2023" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+              </div>
+            </div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Account:</div>
+              <div style="position: relative; width: 200px;">
+                <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                  <option selected>All Accounts</option>
+                  <option>Checking Account</option>
+                  <option>Savings Account</option>
+                  <option>Business Credit Card</option>
+                </select>
+                <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+              </div>
+            </div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Amount:</div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" placeholder="Min" style="width: 80px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                <input type="text" placeholder="Max" style="width: 80px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+              </div>
+            </div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Current Label:</div>
+              <div style="position: relative; width: 200px;">
+                <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                  <option selected>All Labels</option>
+                  <option>Revenue</option>
+                  <option>Expense</option>
+                  <option>Debt Repayment</option>
+                  <option>Debt Investment</option>
+                  <option>Equity Investment</option>
+                  <option>Other Inflow</option>
+                  <option>Other Outflow</option>
+                  <option>Intercompany Transfer</option>
+                </select>
+                <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+              </div>
+            </div>
+          </div>
+          <button class="bs-button" style="margin-top: 0.5rem;">Apply Filters</button>
+        </div>
+        
+        <div class="bs-container">
+          <table class="bs-table" id="bankingTable" style="table-layout: fixed;">
+            <thead>
+              <tr class="bs-header-row">
+                <th style="width: 12%;">Date</th>
+                <th style="width: 12%;">Amount</th>
+                <th style="width: 51%;">Description</th>
+                <th style="width: 25%;">Label</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>07/28/2023</td>
+                <td class="bs-number bs-positive">$5,432.78</td>
+                <td>Payment from ACME Corp for Invoice #12345</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option selected>Revenue</option>
+                      <option>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/27/2023</td>
+                <td class="bs-number bs-negative">-$1,250.00</td>
+                <td>Office Rent Payment - July 2023</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option selected>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/25/2023</td>
+                <td class="bs-number bs-negative">-$2,500.00</td>
+                <td>Loan Payment - Principal and Interest</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option>Expense</option>
+                      <option selected>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/22/2023</td>
+                <td class="bs-number bs-positive">$3,879.15</td>
+                <td>Payment from XYZ Industries for Services</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option selected>Revenue</option>
+                      <option>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/20/2023</td>
+                <td class="bs-number bs-negative">-$1,150.75</td>
+                <td>Cloud Services Monthly Subscription</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option selected>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/18/2023</td>
+                <td class="bs-number bs-negative">-$875.32</td>
+                <td>Office Supplies and Equipment</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option selected>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/15/2023</td>
+                <td class="bs-number bs-positive">$50,000.00</td>
+                <td>Business Loan Deposit</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option selected>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/12/2023</td>
+                <td class="bs-number bs-negative">-$3,215.67</td>
+                <td>Employee Payroll</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option selected>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/10/2023</td>
+                <td class="bs-number bs-positive">$25,000.00</td>
+                <td>Transfer from Subsidiary Account</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option selected>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/05/2023</td>
+                <td class="bs-number bs-positive">$100,000.00</td>
+                <td>Series A Investment - First Tranche</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option selected>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/03/2023</td>
+                <td class="bs-number bs-negative">-$2,150.00</td>
+                <td>Marketing Services - Social Media Campaign</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option>Revenue</option>
+                      <option selected>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>07/01/2023</td>
+                <td class="bs-number bs-positive">$7,890.45</td>
+                <td>Customer Payment - Invoice #10982</td>
+                <td>
+                  <div style="position: relative;">
+                    <select class="label-select" style="width: 100%; padding: 0.4rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                      <option selected>Revenue</option>
+                      <option>Expense</option>
+                      <option>Debt Repayment</option>
+                      <option>Debt Investment</option>
+                      <option>Equity Investment</option>
+                      <option>Other Inflow</option>
+                      <option>Other Outflow</option>
+                      <option>Intercompany Transfer</option>
+                    </select>
+                    <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <div style="margin-top: 1rem; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <span style="color: var(--muted);">Showing 12 of 238 transactions</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem;">
+            <button class="bs-button">Previous</button>
+            <button class="bs-button">Next</button>
+          </div>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Add event listeners for label selection
+      document.querySelectorAll('.label-select').forEach(select => {
+        select.addEventListener('change', function() {
+          console.log(`Transaction relabeled to: ${this.value}`);
+          // Here we would typically save the change to a database
+        });
+      });
+    }
+
+    /******************** SCORING RENDERER *************************/
+    function renderScoring(container) {
+      // Create the Scoring content
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Scoring</h1>
+        
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 500;">Parker Group, Inc. - Credit Scorecard</h2>
+            <div>
+              <button class="bs-button primary">Generate Report</button>
+            </div>
+          </div>
+          
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+              <div style="font-size: 0.9rem; color: var(--muted); margin-bottom: 0.5rem;">Overall Grade</div>
+              <div style="font-size: 3rem; font-weight: 600; color: #3498db;">B</div>
+              <div style="font-size: 0.9rem; margin-top: 0.5rem;">Score: 72/100</div>
+            </div>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.5rem; flex: 3;">
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 100px; text-align: right; font-size: 0.9rem; color: var(--muted);">Revenue</div>
+                <div style="flex-grow: 1; height: 10px; background: var(--border); border-radius: 5px;">
+                  <div style="width: 80%; height: 100%; background: #3498db; border-radius: 5px;"></div>
+                </div>
+                <div style="width: 30px; text-align: right; font-weight: 600;">B</div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 100px; text-align: right; font-size: 0.9rem; color: var(--muted);">Profitability</div>
+                <div style="flex-grow: 1; height: 10px; background: var(--border); border-radius: 5px;">
+                  <div style="width: 60%; height: 100%; background: #e74c3c; border-radius: 5px;"></div>
+                </div>
+                <div style="width: 30px; text-align: right; font-weight: 600;">C</div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 100px; text-align: right; font-size: 0.9rem; color: var(--muted);">Liquidity</div>
+                <div style="flex-grow: 1; height: 10px; background: var(--border); border-radius: 5px;">
+                  <div style="width: 80%; height: 100%; background: #3498db; border-radius: 5px;"></div>
+                </div>
+                <div style="width: 30px; text-align: right; font-weight: 600;">B</div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 100px; text-align: right; font-size: 0.9rem; color: var(--muted);">Cash</div>
+                <div style="flex-grow: 1; height: 10px; background: var(--border); border-radius: 5px;">
+                  <div style="width: 80%; height: 100%; background: #3498db; border-radius: 5px;"></div>
+                </div>
+                <div style="width: 30px; text-align: right; font-weight: 600;">B</div>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 1rem;">
+                <div style="width: 100px; text-align: right; font-size: 0.9rem; color: var(--muted);">Debt/Liabilities</div>
+                <div style="flex-grow: 1; height: 10px; background: var(--border); border-radius: 5px;">
+                  <div style="width: 60%; height: 100%; background: #e74c3c; border-radius: 5px;"></div>
+                </div>
+                <div style="width: 30px; text-align: right; font-weight: 600;">C</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Revenue Section -->
+        <div style="margin-bottom: 2rem;">
+          <div style="background: #3498db; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px 4px 0 0;">
+            Revenue
+          </div>
+          <div style="border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; overflow: hidden;">
+            <div style="padding: 0.5rem 1rem; background: var(--panel); display: flex; justify-content: space-between; border-bottom: 1px solid var(--border);">
+              <div style="font-weight: 600;">Grade:</div>
+              <div style="font-weight: 600; color: #3498db;">B</div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Metric</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Value</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Source</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Scorecard grade</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 20%;">Scorecard weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Avg YoY Growth</td>
+                  <td style="padding: 0.7rem 1rem;">50%</td>
+                  <td style="padding: 0.7rem 1rem;">Accounting P&L_L3M</td>
+                  <td style="padding: 0.7rem 1rem;">C</td>
+                  <td style="padding: 0.7rem 1rem;">10%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Revenue LTM</td>
+                  <td style="padding: 0.7rem 1rem;">$11,417,164</td>
+                  <td style="padding: 0.7rem 1rem;">Accounting P&L_L12M</td>
+                  <td style="padding: 0.7rem 1rem;">A</td>
+                  <td style="padding: 0.7rem 1rem;">5%</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.7rem 1rem;">Seasonality</td>
+                  <td style="padding: 0.7rem 1rem;">34.4%</td>
+                  <td style="padding: 0.7rem 1rem;">Accounting P&L_L12M</td>
+                  <td style="padding: 0.7rem 1rem;">C</td>
+                  <td style="padding: 0.7rem 1rem;">10%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Profitability Section -->
+        <div style="margin-bottom: 2rem;">
+          <div style="background: #e74c3c; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px 4px 0 0;">
+            Profitability
+          </div>
+          <div style="border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; overflow: hidden;">
+            <div style="padding: 0.5rem 1rem; background: var(--panel); display: flex; justify-content: space-between; border-bottom: 1px solid var(--border);">
+              <div style="font-weight: 600;">Grade:</div>
+              <div style="font-weight: 600; color: #e74c3c;">C</div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Metric</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Value</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Source</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Scorecard grade</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 20%;">Scorecard weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Net Operating Profit</td>
+                  <td style="padding: 0.7rem 1rem;">-5.6%</td>
+                  <td style="padding: 0.7rem 1rem;">Accounting P&L_L3M</td>
+                  <td style="padding: 0.7rem 1rem;">C</td>
+                  <td style="padding: 0.7rem 1rem;">10%</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.7rem 1rem;">Net Profit</td>
+                  <td style="padding: 0.7rem 1rem;">-9.3%</td>
+                  <td style="padding: 0.7rem 1rem;">Accounting P&L_L3M</td>
+                  <td style="padding: 0.7rem 1rem;">C</td>
+                  <td style="padding: 0.7rem 1rem;">10%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Liquidity/Working Capital Section -->
+        <div style="margin-bottom: 2rem;">
+          <div style="background: #3498db; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px 4px 0 0;">
+            Liquidity/Working Capital
+          </div>
+          <div style="border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; overflow: hidden;">
+            <div style="padding: 0.5rem 1rem; background: var(--panel); display: flex; justify-content: space-between; border-bottom: 1px solid var(--border);">
+              <div style="font-weight: 600;">Grade:</div>
+              <div style="font-weight: 600; color: #3498db;">B</div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Metric</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Value</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Source</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Scorecard grade</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 20%;">Scorecard weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Current Ratio</td>
+                  <td style="padding: 0.7rem 1rem;">1.7</td>
+                  <td style="padding: 0.7rem 1rem;">Accounting BS_LM</td>
+                  <td style="padding: 0.7rem 1rem;">C</td>
+                  <td style="padding: 0.7rem 1rem;">7%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Quick Ratio</td>
+                  <td style="padding: 0.7rem 1rem;">0.8</td>
+                  <td style="padding: 0.7rem 1rem;">Accounting BS_LM</td>
+                  <td style="padding: 0.7rem 1rem;">B</td>
+                  <td style="padding: 0.7rem 1rem;">5%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Quick Ratio YoY</td>
+                  <td style="padding: 0.7rem 1rem;">-38.3%</td>
+                  <td style="padding: 0.7rem 1rem;">QR / QR LY -1</td>
+                  <td style="padding: 0.7rem 1rem;">D</td>
+                  <td style="padding: 0.7rem 1rem;">3%</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.7rem 1rem;">Current Ratio QoQ</td>
+                  <td style="padding: 0.7rem 1rem;">-3.6%</td>
+                  <td style="padding: 0.7rem 1rem;">CR / CR LQ -1</td>
+                  <td style="padding: 0.7rem 1rem;">C</td>
+                  <td style="padding: 0.7rem 1rem;">2%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Cash Section -->
+        <div style="margin-bottom: 2rem;">
+          <div style="background: #3498db; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px 4px 0 0;">
+            Cash
+          </div>
+          <div style="border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; overflow: hidden;">
+            <div style="padding: 0.5rem 1rem; background: var(--panel); display: flex; justify-content: space-between; border-bottom: 1px solid var(--border);">
+              <div style="font-weight: 600;">Grade:</div>
+              <div style="font-weight: 600; color: #3498db;">B</div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Metric</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Value</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Source</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Scorecard grade</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 20%;">Scorecard weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Cash Latest</td>
+                  <td style="padding: 0.7rem 1rem;">$482,352</td>
+                  <td style="padding: 0.7rem 1rem;">Banking_LM</td>
+                  <td style="padding: 0.7rem 1rem;">B</td>
+                  <td style="padding: 0.7rem 1rem;">3%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Credit Limit to Avg. Available Cash</td>
+                  <td style="padding: 0.7rem 1rem;">0.36</td>
+                  <td style="padding: 0.7rem 1rem;">CL / Avg. Available Cash</td>
+                  <td style="padding: 0.7rem 1rem;">A</td>
+                  <td style="padding: 0.7rem 1rem;">4%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Avg. Available Cash L3M QoQ</td>
+                  <td style="padding: 0.7rem 1rem;">-0.42</td>
+                  <td style="padding: 0.7rem 1rem;">Avg. Available Cash / Avg</td>
+                  <td style="padding: 0.7rem 1rem;">D</td>
+                  <td style="padding: 0.7rem 1rem;">2%</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.7rem 1rem;">Cash Avg</td>
+                  <td style="padding: 0.7rem 1rem;">954,860.53</td>
+                  <td style="padding: 0.7rem 1rem;">Banking_LM</td>
+                  <td style="padding: 0.7rem 1rem;">B</td>
+                  <td style="padding: 0.7rem 1rem;">4%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Debt/Liabilities Section -->
+        <div style="margin-bottom: 2rem;">
+          <div style="background: #e74c3c; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px 4px 0 0;">
+            Debt/Liabilities
+          </div>
+          <div style="border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; overflow: hidden;">
+            <div style="padding: 0.5rem 1rem; background: var(--panel); display: flex; justify-content: space-between; border-bottom: 1px solid var(--border);">
+              <div style="font-weight: 600;">Grade:</div>
+              <div style="font-weight: 600; color: #e74c3c;">C</div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+              <thead>
+                <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Metric</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Value</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 25%;">Source</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 15%;">Scorecard grade</th>
+                  <th style="padding: 0.7rem 1rem; text-align: left; width: 20%;">Scorecard weight</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Liabilities LM to Avg. Revenue L3M</td>
+                  <td style="padding: 0.7rem 1rem;">3.92</td>
+                  <td style="padding: 0.7rem 1rem;">Liabilities / Revenue</td>
+                  <td style="padding: 0.7rem 1rem;">E</td>
+                  <td style="padding: 0.7rem 1rem;">13%</td>
+                </tr>
+                <tr style="border-bottom: 1px solid var(--border);">
+                  <td style="padding: 0.7rem 1rem;">Liabilities LM to Avg. Available Cash L3M</td>
+                  <td style="padding: 0.7rem 1rem;">3.67</td>
+                  <td style="padding: 0.7rem 1rem;">Liabilities / Avg. Available</td>
+                  <td style="padding: 0.7rem 1rem;">B</td>
+                  <td style="padding: 0.7rem 1rem;">5%</td>
+                </tr>
+                <tr>
+                  <td style="padding: 0.7rem 1rem;">Debt Service LM to Avg. Revenue L12M</td>
+                  <td style="padding: 0.7rem 1rem;">0.01</td>
+                  <td style="padding: 0.7rem 1rem;">Debt Repayment / Gross</td>
+                  <td style="padding: 0.7rem 1rem;">A</td>
+                  <td style="padding: 0.7rem 1rem;">5%</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+        
+        <!-- Recommendation Section -->
+        <div style="margin-bottom: 2rem;">
+          <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem;">
+            <h2 style="font-size: 1.2rem; font-weight: 500; margin-bottom: 1rem;">Recommendations</h2>
+            <div style="display: flex; gap: 2rem;">
+              <div style="flex: 1;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Credit Limit Recommendation</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; color: #3498db; margin-bottom: 0.5rem;">$350,000</div>
+                <div style="font-size: 0.9rem; color: var(--muted);">Based on cash flow and revenue</div>
+              </div>
+              <div style="flex: 1;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">APR Recommendation</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; color: #3498db; margin-bottom: 0.5rem;">16.5%</div>
+                <div style="font-size: 0.9rem; color: var(--muted);">Based on risk profile</div>
+              </div>
+              <div style="flex: 1;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Payment Terms</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; color: #3498db; margin-bottom: 0.5rem;">Net 30</div>
+                <div style="font-size: 0.9rem; color: var(--muted);">Standard terms</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+    }
+
+    /******************** GRAPHS & METRICS RENDERER *************************/
+    function renderGraphsMetrics(container) {
+      // Create the Graphs & Metrics content
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Graphs & Metric Decisions</h1>
+        
+        <!-- Category Header - Revenue -->
+        <div style="background: #3498db; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px 4px 0 0; margin-top: 1.5rem;">
+          Revenue
+        </div>
+        
+        <!-- Graphs Section -->
+        <div style="border: 1px solid var(--border); border-top: none; border-radius: 0 0 4px 4px; overflow: hidden; padding: 1.5rem; margin-bottom: 2rem;">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+            <!-- Revenue Chart -->
+            <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1rem; position: relative; height: 300px;">
+              <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">Revenue</h3>
+              <div style="position: absolute; top: 2.5rem; left: 1rem; font-size: 0.7rem;">
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <div style="width: 12px; height: 3px; background: #2ecc71;"></div>
+                  <span>Sales - Total Sales</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <div style="width: 12px; height: 3px; background: #e74c3c;"></div>
+                  <span>Bank - Revenue</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <div style="width: 12px; height: 3px; background: #3498db;"></div>
+                  <span>Acc - Net sales</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <div style="width: 12px; height: 3px; background: #f39c12;"></div>
+                  <span>Shopify</span>
+                </div>
+              </div>
+              <canvas id="revenueChart" height="250"></canvas>
+            </div>
+            
+            <!-- Seasonality Chart -->
+            <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1rem; position: relative; height: 300px;">
+              <h3 style="font-size: 1rem; text-align: center; margin-bottom: 0.5rem;">Seasonality</h3>
+              <div style="position: absolute; top: 2.5rem; left: 1rem; font-size: 0.7rem;">
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <div style="width: 12px; height: 12px; background: #3498db;"></div>
+                  <span>Accounting</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <div style="width: 12px; height: 12px; background: #e74c3c;"></div>
+                  <span>Banking</span>
+                </div>
+                <div style="display: flex; align-items: center; gap: 0.3rem;">
+                  <div style="width: 12px; height: 12px; background: #2ecc71;"></div>
+                  <span>Sales</span>
+                </div>
+              </div>
+              <canvas id="seasonalityChart" height="250"></canvas>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Revenue Selection Panels -->
+        <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 2rem;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+              <tr style="background: var(--panel);">
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Feature</th>
+                <th style="padding: 0.75rem; text-align: left; width: 15%;">Source</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Timeframe</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Value</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Selected</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Feature</th>
+                <th style="padding: 0.75rem; text-align: left; width: 15%;">Source</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Timeframe</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Value</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Selected</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Accounting PL</td>
+                <td>L3M</td>
+                <td>617,989.16</td>
+                <td><input type="checkbox" checked /></td>
+                <td>Avg YoY Growth</td>
+                <td>Accounting PL</td>
+                <td>L6M</td>
+                <td>2.4%</td>
+                <td><input type="checkbox" checked /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Accounting PL</td>
+                <td>L6M</td>
+                <td>931,568</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Accounting PL</td>
+                <td>L6M</td>
+                <td>31.3%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Accounting PL</td>
+                <td>L12M</td>
+                <td>896,407</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Accounting PL</td>
+                <td>L6M</td>
+                <td>39.9%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Banking</td>
+                <td>L3M</td>
+                <td>1,977,850.58</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Banking</td>
+                <td>L3M</td>
+                <td>227.0%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Banking</td>
+                <td>L6M</td>
+                <td>2,302,827</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Banking</td>
+                <td>L6M</td>
+                <td>280.7%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Banking</td>
+                <td>L12M</td>
+                <td>1,139,832</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Banking</td>
+                <td>L12M</td>
+                <td>154.6%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Sales</td>
+                <td>L3M</td>
+                <td>847,211</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Sales</td>
+                <td>L3M</td>
+                <td>15.9%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Sales</td>
+                <td>L6M</td>
+                <td>1,037,828</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Sales</td>
+                <td>L6M</td>
+                <td>15.4%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Revenue</td>
+                <td>Sales</td>
+                <td>L12M</td>
+                <td>1,084,814</td>
+                <td><input type="checkbox" /></td>
+                <td>Avg YoY Growth</td>
+                <td>Sales</td>
+                <td>L12M</td>
+                <td>28.9%</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Override</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="checkbox" /></td>
+                <td>Override</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr>
+                <td>Reason: xyz</td>
+                <td colspan="4"></td>
+                <td>Reason:</td>
+                <td colspan="4"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        
+        <!-- Seasonality Selection Panel -->
+        <div style="border: 1px solid var(--border); border-radius: 8px; overflow: hidden; margin-bottom: 2rem;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+            <thead>
+              <tr style="background: var(--panel);">
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Feature</th>
+                <th style="padding: 0.75rem; text-align: left; width: 15%;">Source</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Timeframe</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Value</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Selected</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Feature</th>
+                <th style="padding: 0.75rem; text-align: left; width: 15%;">Source</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Timeframe</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Value</th>
+                <th style="padding: 0.75rem; text-align: left; width: 10%;">Selected</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Seasonality</td>
+                <td>Accounting PL</td>
+                <td>L12M</td>
+                <td>33.3%</td>
+                <td><input type="checkbox" checked /></td>
+                <td>Revenue LTM</td>
+                <td>Accounting PL</td>
+                <td>L12M</td>
+                <td>13,469,495</td>
+                <td><input type="checkbox" checked /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Seasonality</td>
+                <td>Banking</td>
+                <td>L12M</td>
+                <td>24.5%</td>
+                <td><input type="checkbox" /></td>
+                <td>Override</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Seasonality</td>
+                <td>Sales</td>
+                <td>L12M</td>
+                <td>33.3%</td>
+                <td><input type="checkbox" /></td>
+                <td>Reason:</td>
+                <td colspan="4"></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Override</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="checkbox" /></td>
+                <td>Revenue LTM</td>
+                <td>Accounting PL</td>
+                <td>L12M</td>
+                <td>10,792,826</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Reason:</td>
+                <td colspan="4"></td>
+                <td>Revenue LTM</td>
+                <td>Banking</td>
+                <td>L12M</td>
+                <td>19,477,988</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Seasonality LY</td>
+                <td>Accounting PL</td>
+                <td>L12M</td>
+                <td>17.0%</td>
+                <td><input type="checkbox" checked /></td>
+                <td>Revenue LTM</td>
+                <td>Sales</td>
+                <td>L12M</td>
+                <td>13,017,770</td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Seasonality LY</td>
+                <td>Banking</td>
+                <td>L12M</td>
+                <td>11.4%</td>
+                <td><input type="checkbox" /></td>
+                <td>Override</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="checkbox" /></td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td>Seasonality LY</td>
+                <td>Sales</td>
+                <td>L12M</td>
+                <td>16.8%</td>
+                <td><input type="checkbox" /></td>
+                <td>Reason:</td>
+                <td colspan="4"></td>
+              </tr>
+              <tr>
+                <td>Override</td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td><input type="checkbox" /></td>
+                <td></td>
+                <td colspan="4"></td>
+              </tr>
+              <tr>
+                <td>Reason:</td>
+                <td colspan="4"></td>
+                <td></td>
+                <td colspan="4"></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Initialize charts after DOM is loaded
+      setTimeout(() => {
+        createRevenueChart();
+        createSeasonalityChart();
+      }, 100);
+    }
+    
+    // Create Revenue Chart
+    function createRevenueChart() {
+      const ctx = document.getElementById('revenueChart').getContext('2d');
+      
+      // Sample data
+      const months = ['Mar/22', 'Apr/22', 'May/22', 'Jun/22', 'Jul/22', 'Aug/22', 'Sep/22', 'Oct/22', 'Nov/22', 'Dec/22', 'Jan/23', 'Feb/23', 'Mar/23', 'Apr/23', 'May/23'];
+      
+      const salesData = [1000000, 1200000, 900000, 700000, 1500000, 1700000, 1300000, 800000, 1100000, 1000000, 900000, 1400000, 2100000, 1200000, 1300000];
+      const bankData = [800000, 900000, 600000, 500000, 700000, 1200000, 800000, 700000, 1100000, 800000, 900000, 3500000, 1800000, 2000000, 2000000];
+      const accData = [900000, 1000000, 700000, 600000, 800000, 1000000, 900000, 1200000, 1300000, 900000, 700000, 1300000, 1500000, 900000, 1000000];
+      
+      // Shopify data (bar chart)
+      const shopifyData = [300000, 400000, 350000, 300000, 450000, 500000, 400000, 350000, 450000, 400000, 350000, 500000, 600000, 400000, 450000];
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Sales - Total Sales',
+              data: salesData,
+              borderColor: '#2ecc71',
+              backgroundColor: 'transparent',
+              tension: 0.4,
+              borderWidth: 2,
+              pointRadius: 0
+            },
+            {
+              label: 'Bank - Revenue',
+              data: bankData,
+              borderColor: '#e74c3c',
+              backgroundColor: 'transparent',
+              tension: 0.4,
+              borderWidth: 2,
+              pointRadius: 0
+            },
+            {
+              label: 'Acc - Net sales',
+              data: accData,
+              borderColor: '#3498db',
+              backgroundColor: 'transparent',
+              tension: 0.4,
+              borderWidth: 2,
+              pointRadius: 0
+            },
+            {
+              label: 'Shopify',
+              type: 'bar',
+              data: shopifyData,
+              backgroundColor: 'rgba(243, 156, 18, 0.4)',
+              borderColor: 'rgba(243, 156, 18, 0.8)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              },
+              ticks: {
+                font: {
+                  size: 9
+                },
+                maxRotation: 45,
+                minRotation: 45
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return '$' + (value / 1000000).toFixed(1) + 'M';
+                },
+                font: {
+                  size: 10
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    // Create Seasonality Chart
+    function createSeasonalityChart() {
+      const ctx = document.getElementById('seasonalityChart').getContext('2d');
+      
+      // Sample data
+      const quarters = ['Q2-2023', 'Q3-2023', 'Q4-2023', 'Q1-2024', 'Q2-2024', 'Q3-2024', 'Q4-2024'];
+      
+      const accountingData = [24, 21, 30, 17, 25, 23, 34];
+      const bankingData = [24, 20, 30, 11, 18, 17, 49];
+      const salesData = [25, 20, 33, 17, 25, 22, 36];
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: quarters,
+          datasets: [
+            {
+              label: 'Accounting',
+              data: accountingData,
+              backgroundColor: '#3498db',
+              borderColor: '#3498db',
+              borderWidth: 1
+            },
+            {
+              label: 'Banking',
+              data: bankingData,
+              backgroundColor: '#e74c3c',
+              borderColor: '#e74c3c',
+              borderWidth: 1
+            },
+            {
+              label: 'Sales',
+              data: salesData,
+              backgroundColor: '#2ecc71',
+              borderColor: '#2ecc71',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              },
+              min: 0,
+              max: 50
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y + '%';
+                }
+              }
+            }
+          }
+        }
+      });
+    }
   </script>
 </body>
 </html>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
