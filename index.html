@@ -30,12 +30,31 @@
     /* ---------------- CHAT (RIGHT) ---------------- */
     .chat-sidebar { width: var(--chat-width); background: var(--panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; margin-left: auto; }
     .chat-header { padding: 1rem; font-weight: 600; border-bottom: 1px solid var(--border); }
-    .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
-    .msg { max-width: 90%; padding: 0.5rem 0.75rem; border-radius: 0.6rem; font-size: 0.85rem; }
+    .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; max-height: calc(100vh - 210px); }
+    .msg { max-width: 90%; padding: 0.5rem 0.75rem; border-radius: 0.6rem; font-size: 0.85rem; line-height: 1.4; margin-bottom: 0.5rem; }
     .user { align-self: flex-end; background: var(--accent); }
     .bot  { align-self: flex-start; background: var(--border); }
     .chat-input { border-top: 1px solid var(--border); padding: 0.75rem; }
     .chat-input input { width: 100%; padding: 0.55rem 0.75rem; border-radius: 0.4rem; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+    
+    /* Predefined Questions */
+    .predefined-questions { background: var(--bg); border-top: 1px solid var(--border); }
+    .question-buttons { display: flex; flex-direction: column; gap: 0.5rem; }
+    .question-btn { 
+      padding: 0.5rem 0.75rem; 
+      background: var(--panel); 
+      border: 1px solid var(--border); 
+      border-radius: 4px; 
+      color: var(--text); 
+      text-align: left; 
+      font-size: 0.85rem; 
+      cursor: pointer; 
+      transition: background 0.2s;
+    }
+    .question-btn:hover { 
+      background: var(--border); 
+      border-color: var(--accent);
+    }
 
     /* ---------------- NAVIGATION SIDEBAR (hidden initially) ---------------- */
     aside { width: var(--nav-width); background: var(--panel); flex-direction: column; padding: 1rem; border-right: 1px solid var(--border); overflow-y: auto; display: none; }
@@ -194,6 +213,84 @@
       opacity: 0.5;
       background: rgba(255, 104, 51, 0.2);
     }
+
+    /* Button layout for the Balance Sheet Labeling */
+    .bs-actions {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .bs-button {
+      background: var(--panel);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 0.5rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+      margin-right: 0.5rem;
+    }
+    .bs-button.primary {
+      background: var(--accent);
+      color: white;
+      border-color: var(--accent);
+    }
+    .bs-button:hover {
+      background: var(--border);
+    }
+    .bs-button.primary:hover {
+      background: #ff5820;
+    }
+
+    /* Copilot Styles */
+    .copilot-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, rgba(76, 76, 195, 0.1), rgba(255, 104, 51, 0.1));
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.5rem 0.75rem;
+      margin-bottom: 1rem;
+      font-size: 0.9rem;
+    }
+    .copilot-badge span {
+      font-size: 1rem;
+    }
+
+    .copilot-comment {
+      background: linear-gradient(135deg, rgba(76, 76, 195, 0.1), rgba(255, 104, 51, 0.1));
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+    .copilot-comment span {
+      font-size: 1rem;
+      margin-right: 0.25rem;
+    }
+
+    .copilot-suggestion-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(135deg, rgba(76, 76, 195, 0.2), rgba(255, 104, 51, 0.2));
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 6px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1.5rem;
+      font-size: 0.9rem;
+      cursor: pointer;
+    }
+    .copilot-suggestion-btn:hover {
+      background: linear-gradient(135deg, rgba(76, 76, 195, 0.3), rgba(255, 104, 51, 0.3));
+    }
+    .copilot-suggestion-btn span {
+      font-size: 1.1rem;
+    }
   </style>
 </head>
 <body>
@@ -223,8 +320,7 @@
 
       <div class="nav-item" data-screen="scoring">Scoring</div>
 
-      <div class="nav-item" data-target="decisions">Decisions <span>▸</span></div>
-      <div class="submenu" id="decisions"><a data-screen="securities">Securities</a><a data-screen="finalDecisions">Final decisions</a></div>
+      <div class="nav-item" data-screen="decisions">Decisions</div>
     </nav>
   </aside>
 
@@ -254,8 +350,21 @@
   
   <!-- CHAT SIDEBAR -->
   <div class="chat-sidebar">
-    <div class="chat-header">Copilot</div>
+    <div class="chat-header">
+      Copilot
+      <button id="resetChatBtn" style="float: right; background: none; border: none; color: var(--accent); cursor: pointer; font-size: 0.85rem;">Reset</button>
+    </div>
     <div class="chat-messages" id="chatMessages"><div class="msg bot">Hi! I'm your underwriting copilot – ask me anything.</div></div>
+    <div class="predefined-questions" id="predefinedQuestions" style="padding: 0.5rem 0.75rem; border-top: 1px solid var(--border);">
+      <div style="margin-bottom: 0.5rem; font-size: 0.8rem; color: var(--muted);">Suggested questions:</div>
+      <div class="question-buttons">
+        <button class="question-btn">What's the credit score?</button>
+        <button class="question-btn">Explain the revenue trend</button>
+        <button class="question-btn">Risk assessment summary</button>
+        <button class="question-btn">Security requirements?</button>
+        <button class="question-btn">Recent cash flow issues?</button>
+      </div>
+    </div>
     <div class="chat-input"><input id="chatInput" type="text" placeholder="Type a message…"></div>
   </div>
 
@@ -263,8 +372,98 @@
     /******************** CHAT LOGIC (unchanged) *************************/
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
-    chatInput.addEventListener('keydown', e => { if(e.key==='Enter' && chatInput.value.trim()){ const t=chatInput.value.trim(); addMessage(t,'user'); chatInput.value=''; setTimeout(()=>addMessage('Noted! I will look into that.','bot'),600);} });
+    const resetChatBtn = document.getElementById('resetChatBtn');
+    const predefinedQuestions = document.getElementById('predefinedQuestions');
+    
+    chatInput.addEventListener('keydown', e => { if(e.key==='Enter' && chatInput.value.trim()){ const t=chatInput.value.trim(); addMessage(t,'user'); chatInput.value=''; setTimeout(()=>addMessageWithResponse(t),600);} });
     function addMessage(text,type){ const div=document.createElement('div'); div.className=`msg ${type}`; div.textContent=text; chatMessages.appendChild(div); chatMessages.scrollTop=chatMessages.scrollHeight; }
+
+    // Reset chat to just the greeting
+    function resetChat() {
+      while (chatMessages.children.length > 0) {
+        chatMessages.removeChild(chatMessages.lastChild);
+      }
+      addMessage("Hi! I'm your underwriting copilot – ask me anything.", "bot");
+    }
+    
+    // Add event listener for reset button
+    resetChatBtn.addEventListener('click', () => {
+      if (resetChatBtn.textContent === 'Reset') {
+        resetChat();
+        resetChatBtn.textContent = 'Show Sample';
+      } else {
+        initializeChat();
+        resetChatBtn.textContent = 'Reset';
+      }
+    });
+    
+    // Add event listeners for predefined question buttons
+    document.querySelectorAll('.question-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const question = btn.textContent;
+        addMessage(question, 'user');
+        setTimeout(() => addMessageWithResponse(question), 600);
+      });
+    });
+    
+    // Generate appropriate response based on question
+    function addMessageWithResponse(question) {
+      let response = '';
+      
+      if (question.toLowerCase().includes('credit score')) {
+        response = "Parker Group has a B credit score, which is an improvement from C last year. This upgrade reflects their consistent payment history and stronger financial metrics over the past 12 months.";
+      } else if (question.toLowerCase().includes('revenue trend')) {
+        response = "Revenue has shown a positive trend with 50% YoY growth. Q4 2023 showed particularly strong performance at $3.2M, up from $2.1M in Q4 2022. The growth is primarily driven by their enterprise client segment, which now represents 65% of total revenue.";
+      } else if (question.toLowerCase().includes('risk assessment')) {
+        response = "The primary risks identified are: 1) Customer concentration with 35% of revenue from a single client, 2) Seasonality in Q4 operations, 3) Increasing R&D expenses (up 28% QoQ). Overall risk profile is medium-low, improved from medium last year.";
+      } else if (question.toLowerCase().includes('security')) {
+        response = "Current security requirements include a UCC filing and Personal Guarantee from the CEO. Based on improved financial performance, no deposit or DACA is required at this time.";
+      } else if (question.toLowerCase().includes('cash flow')) {
+        response = "No significant cash flow issues identified. Their current ratio is 1.7 (improved from 1.3 last year), with $482K cash on hand. A temporary dip occurred in March due to a large inventory purchase, but cashflow normalized in April.";
+      } else {
+        response = "I'll look into that and get back to you with more information. Is there anything specific you'd like me to analyze?";
+      }
+      
+      addMessage(response, 'bot');
+    }
+
+    // Initialize chat with sample conversation about decisions
+    function initializeChat() {
+      // Clear any existing messages except the first greeting
+      while (chatMessages.children.length > 1) {
+        chatMessages.removeChild(chatMessages.lastChild);
+      }
+      
+      // Sample conversation about underwriting decisions
+      const conversation = [
+        { text: "Can you explain why we decided to increase the credit limit for Parker Group?", type: "user" },
+        { text: "Based on our analysis, Parker Group showed 50% YoY revenue growth and improved cash position. Their profitability metrics and payment history were excellent, improving from C to B credit score over the past year.", type: "bot" },
+        { text: "What about the securities required?", type: "user" },
+        { text: "For Parker Group, we're maintaining the existing UCC filing and Personal Guarantee from the CEO, which were already in place. Our risk assessment determined that no deposit or DACA is required based on their strong financial position and historical performance.", type: "bot" },
+        { text: "Did we consider any contingencies for this approval?", type: "user" },
+        { text: "Yes, we've added two main contingencies: 1) Verification of their largest client contract renewal, which represents 35% of their current revenue, and 2) We may request updated financial statements for Q1 2023 if needed before finalizing.", type: "bot" },
+        { text: "Are there any risks we should monitor after approval?", type: "user" },
+        { text: "The main risk factors to monitor are: 1) Customer concentration risk with their top client, 2) Seasonality in Q4 which showed higher than usual fluctuation this year, and 3) The increasing cash burn rate in their R&D department, which grew 28% last quarter.", type: "bot" },
+        { text: "Thanks for the summary. I'll include these points in my review.", type: "user" },
+        { text: "Happy to help! Let me know if you need any additional data or analysis for the final decision.", type: "bot" }
+      ];
+      
+      // Reset chat first
+      resetChat();
+      
+      // Add each message with varying delays for realism
+      let cumulativeDelay = 0;
+      conversation.forEach((msg, index) => {
+        // Calculate a varying delay based on message length and type
+        // Bot messages take longer to "type" than user messages
+        const baseDelay = msg.type === 'bot' ? 100 + msg.text.length * 2 : 500;
+        cumulativeDelay += baseDelay;
+        
+        setTimeout(() => {
+          addMessage(msg.text, msg.type);
+        }, cumulativeDelay);
+      });
+    }
 
     /******************** EXISTING NAV DROPDOWN LOGIC (unchanged) *************************/
     document.querySelectorAll('.nav-item[data-target]').forEach(item=>{ item.addEventListener('click', ()=>{ const submenu=document.getElementById(item.dataset.target); if(submenu){ const open=submenu.style.display==='flex'; submenu.style.display=open?'none':'flex'; const arrow=item.querySelector('span:last-child'); if(arrow) arrow.textContent=open?'▸':'▾'; }});});
@@ -305,6 +504,8 @@
         renderScoring(main);
       } else if (screen === 'graphsMetrics') {
         renderGraphsMetrics(main);
+      } else if (screen === 'decisions') {
+        renderDecisions(main);
       } else { 
         const h = document.createElement('h1'); 
         h.textContent = screen.replace(/([A-Z])/g, ' $1'); 
@@ -923,6 +1124,8 @@
         renderScoring(main);
       } else if (screen === 'graphsMetrics') {
         renderGraphsMetrics(main);
+      } else if (screen === 'decisions') {
+        renderDecisions(main, companyName);
       } else {
         const h = document.createElement('h1');
         h.textContent = screen.replace(/([A-Z])/g, ' $1');
@@ -969,6 +1172,113 @@
             <div class="info-item">
               <div class="info-item-label">Priority</div>
               <div class="info-item-value">Medium</div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Copilot Research Section -->
+        <div class="info-section">
+          <h2 style="font-size: 1.2rem; font-weight: 500; margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.1rem;">🤖</span> Copilot Research
+          </h2>
+          
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+            <!-- Adverse News Research -->
+            <div class="copilot-comment" style="margin-bottom: 0;">
+              <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Adverse News Research</h3>
+              <div style="font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin-bottom: 0.75rem;">No significant adverse news found in the past 24 months. Minor mentions in industry publications regarding:</p>
+                <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem;">
+                  <li>Supply chain delays affecting Q3 2023 deliveries</li>
+                  <li>Executive leadership change (CFO) in January 2024</li>
+                </ul>
+                <p style="color: #1ab394; font-weight: 500;">Risk assessment: Low</p>
+              </div>
+            </div>
+            
+            <!-- Litigation/Bankruptcy Research -->
+            <div class="copilot-comment" style="margin-bottom: 0;">
+              <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Litigation/Bankruptcy Research</h3>
+              <div style="font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin-bottom: 0.75rem;">No bankruptcy filings or proceedings identified. One minor litigation case:</p>
+                <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem;">
+                  <li>IP dispute with former contractor (settled Jan 2023)</li>
+                  <li>Settlement amount: $45,000 (immaterial to operations)</li>
+                </ul>
+                <p style="color: #1ab394; font-weight: 500;">Risk assessment: Low</p>
+              </div>
+            </div>
+            
+            <!-- Business Owner Research -->
+            <div class="copilot-comment" style="margin-bottom: 0;">
+              <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Business Owner Research</h3>
+              <div style="font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin-bottom: 0.75rem;">CEO John Smith:</p>
+                <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem;">
+                  <li>15+ years industry experience</li>
+                  <li>Previously founded and sold TechVenture Inc. ($24M exit)</li>
+                  <li>No criminal records or civil judgments</li>
+                  <li>Credit score: 780 (Excellent)</li>
+                </ul>
+                <p style="color: #1ab394; font-weight: 500;">Risk assessment: Very Low</p>
+              </div>
+            </div>
+            
+            <!-- User Opinion Research -->
+            <div class="copilot-comment" style="margin-bottom: 0;">
+              <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">User Opinion Research</h3>
+              <div style="font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin-bottom: 0.75rem;">Analysis from 450+ online reviews and customer feedback:</p>
+                <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem;">
+                  <li>Customer satisfaction score: 4.7/5.0</li>
+                  <li>NPS score: 72 (Industry avg: 45)</li>
+                  <li>Key strengths: Product quality, customer service</li>
+                  <li>Improvement areas: Product documentation</li>
+                </ul>
+                <p style="color: #1ab394; font-weight: 500;">Risk assessment: Very Low</p>
+              </div>
+            </div>
+            
+            <!-- Industry Metric Benchmarks -->
+            <div class="copilot-comment" style="margin-bottom: 0;">
+              <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Industry Metric Benchmarks</h3>
+              <div style="font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin-bottom: 0.75rem;">Comparison with industry averages:</p>
+                <table style="width: 100%; border-collapse: collapse; margin-bottom: 0.75rem;">
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.4rem 0; width: 50%;">Gross Margin</td>
+                    <td style="padding: 0.4rem 0;">62% (Industry: 54%)</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.4rem 0;">OpEx Ratio</td>
+                    <td style="padding: 0.4rem 0;">32% (Industry: 35%)</td>
+                  </tr>
+                  <tr style="border-bottom: 1px solid var(--border);">
+                    <td style="padding: 0.4rem 0;">YoY Growth</td>
+                    <td style="padding: 0.4rem 0;">50% (Industry: 22%)</td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 0.4rem 0;">Cash Runway</td>
+                    <td style="padding: 0.4rem 0;">9.4 months (Industry: 7.2)</td>
+                  </tr>
+                </table>
+                <p style="color: #1ab394; font-weight: 500;">Performance: Above Average</p>
+              </div>
+            </div>
+            
+            <!-- Previous Communications -->
+            <div class="copilot-comment" style="margin-bottom: 0;">
+              <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Previous Communications</h3>
+              <div style="font-size: 0.9rem; line-height: 1.5;">
+                <p style="margin-bottom: 0.75rem;">Key insights from recent communications:</p>
+                <ul style="list-style-type: disc; margin-left: 1.5rem; margin-bottom: 0.75rem;">
+                  <li>Plans to expand product line in Q3 2024</li>
+                  <li>Exploring new market entry (Europe) by Q4 2024</li>
+                  <li>Refinancing discussions with other lenders (exploratory)</li>
+                  <li>Anticipating 35% revenue increase in next fiscal year</li>
+                </ul>
+                <p style="color: #1ab394; font-weight: 500;">Relationship: Strong</p>
+              </div>
             </div>
           </div>
         </div>
@@ -1098,6 +1408,11 @@
       const contentDiv = document.createElement('div');
       contentDiv.innerHTML = `
         <h1>Parker Spend Analysis</h1>
+        
+        <!-- New Copilot Comment -->
+        <div class="copilot-comment">
+          <p><span>🤖</span> <strong>Copilot Analysis:</strong> Parker Group demonstrates high-efficiency usage of Parker products with 72% of transactions processed through Parker cards (industry avg: 58%). Their Pin-inflow ratio exceeds expectations at 38%, showing excellent adoption of digital payment tools. Prime opportunity areas include utilizing more ACH services for recurring vendor payments and adopting Parker's invoice financing for larger transactions. Utilization trends have improved 32% QoQ, and credit limit efficiency ranks in the top 15% of similar-sized customers.</p>
+        </div>
         
         <div style="margin-bottom: 2rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -1769,836 +2084,63 @@
       contentDiv.innerHTML = `
         <h1>Data Gathering</h1>
         
-        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
-          <!-- Source Readiness Section -->
-          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
-            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Readiness</h2>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
-                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Banking Data</h3>
-                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
-                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Today, 09:24 AM</div>
-                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
-                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
-                    <span style="color: #1ab394; font-size: 18px;">✓</span>
-                  </span>
-                </div>
-              </div>
-              
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
-                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Accounting Data</h3>
-                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
-                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Today, 08:15 AM</div>
-                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
-                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
-                    <span style="color: #1ab394; font-size: 18px;">✓</span>
-                  </span>
-                </div>
-              </div>
-              
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
-                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Payment Processor</h3>
-                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
-                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Yesterday, 11:30 PM</div>
-                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
-                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
-                    <span style="color: #1ab394; font-size: 18px;">✓</span>
-                  </span>
-                </div>
-              </div>
-            </div>
-            
-            <div style="font-size: 0.9rem; line-height: 1.5;">
-              <p style="margin-bottom: 1rem;">All data sources are successfully connected and providing up-to-date information. There are no connectivity issues to address at this time.</p>
-              <p>The following data sources are active:</p>
-              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
-                <li>Banking: Chase Business Complete Banking (connected via Plaid)</li>
-                <li>Accounting: QuickBooks Online (direct API integration)</li>
-                <li>Payment Processor: Stripe (direct API integration)</li>
-              </ul>
-            </div>
-          </div>
+        <!-- New Copilot Suggestion Button -->
+        <button class="copilot-suggestion-btn">
+          <span>🤖</span> Apply Copilot Suggestion
+        </button>
+        
+        <!-- Data Source Decision Summary -->
+        <div style="margin-bottom: 2rem; border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
+          <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Data Source Decisions</h2>
           
-          <!-- Source Completeness Section -->
-          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
-            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Completeness</h2>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-              <div>
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span>Banking Data Completeness</span>
-                  <span>98%</span>
-                </div>
-                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
-                  <div style="width: 98%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span>Accounting Data Completeness</span>
-                  <span>92%</span>
-                </div>
-                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
-                  <div style="width: 92%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                  <span>Payment Processor Data Completeness</span>
-                  <span>100%</span>
-                </div>
-                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
-                  <div style="width: 100%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
-                </div>
-              </div>
-              
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
-                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Missing Data</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                  <thead>
-                    <tr style="border-bottom: 1px solid var(--border);">
-                      <th style="text-align: left; padding: 0.5rem 0;">Data Source</th>
-                      <th style="text-align: left; padding: 0.5rem 0;">Missing Elements</th>
-                      <th style="text-align: left; padding: 0.5rem 0;">Impact</th>
-              </tr>
-                  </thead>
-                  <tbody>
-                    <tr style="border-bottom: 1px solid var(--border);">
-                      <td style="padding: 0.5rem 0;">Banking</td>
-                      <td style="padding: 0.5rem 0;">2 months historical data (2022)</td>
-                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Low</span></td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid var(--border);">
-                      <td style="padding: 0.5rem 0;">Accounting</td>
-                      <td style="padding: 0.5rem 0;">Some expense categorizations</td>
-                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Medium</span></td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 0.5rem 0;">Payment Processor</td>
-                      <td style="padding: 0.5rem 0;">None</td>
-                      <td style="padding: 0.5rem 0;"><span style="color: #1ab394;">None</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-            
-            <div style="font-size: 0.9rem; line-height: 1.5;">
-              <p style="margin-bottom: 1rem;">Overall data completeness is at <strong>96.67%</strong>, which exceeds the minimum threshold of 90% required for accurate analysis.</p>
-              <p>The following actions are recommended to improve data completeness:</p>
-              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
-                <li>Request additional historical banking data from the client for the missing 2022 months</li>
-                <li>Work with the accounting team to properly categorize remaining uncategorized expenses</li>
-              </ul>
-            </div>
-          </div>
-          
-          <!-- Source Consistency Section -->
-          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
-            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Consistency</h2>
-            
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
-                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--muted);">Monthly Reconciliation Status</h3>
-                <canvas id="reconciliationChart" height="220"></canvas>
-              </div>
-              
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
-                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Consistency Issues</h3>
-                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
-                  <thead>
-                    <tr style="border-bottom: 1px solid var(--border);">
-                      <th style="text-align: left; padding: 0.5rem 0;">Issue Type</th>
-                      <th style="text-align: left; padding: 0.5rem 0;">Count</th>
-                      <th style="text-align: left; padding: 0.5rem 0;">Severity</th>
-              </tr>
-                  </thead>
-                  <tbody>
-                    <tr style="border-bottom: 1px solid var(--border);">
-                      <td style="padding: 0.5rem 0;">Revenue Discrepancies</td>
-                      <td style="padding: 0.5rem 0;">2</td>
-                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Medium</span></td>
-                    </tr>
-                    <tr style="border-bottom: 1px solid var(--border);">
-                      <td style="padding: 0.5rem 0;">Timing Differences</td>
-                      <td style="padding: 0.5rem 0;">5</td>
-                      <td style="padding: 0.5rem 0;"><span style="color: #1ab394;">Low</span></td>
-                    </tr>
-                    <tr>
-                      <td style="padding: 0.5rem 0;">Missing Transactions</td>
-                      <td style="padding: 0.5rem 0;">1</td>
-                      <td style="padding: 0.5rem 0;"><span style="color: #ed5565;">High</span></td>
-                    </tr>
-                  </tbody>
-                </table>
-                
-                <div style="margin-top: 1.5rem;">
-                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-                    <span>Overall Consistency Score</span>
-                    <span>89%</span>
-                  </div>
-                  <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px;">
-                    <div style="width: 89%; height: 100%; background: #f8ac59; border-radius: 4px;"></div>
-                  </div>
-                </div>
-              </div>
-            </div>
-            
-            <div style="font-size: 0.9rem; line-height: 1.5;">
-              <p style="margin-bottom: 1rem;">Data consistency across sources has a score of <strong>89%</strong>, which is slightly below the ideal threshold of 95%. The main issues are related to revenue recognition timing between accounting and payment processor systems.</p>
-              <p>The following actions are recommended to improve data consistency:</p>
-              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
-                <li>Investigate the high-severity missing transaction from January 2024 ($15,230)</li>
-                <li>Reconcile the revenue discrepancies between QuickBooks and Stripe for February and March 2024</li>
-                <li>Document the acceptable timing differences for month-end processing</li>
-              </ul>
-            </div>
-          </div>
-        </div>
-      `;
-      container.appendChild(contentDiv);
-      
-      // Create reconciliation chart after DOM is loaded
-      setTimeout(() => {
-        createReconciliationChart();
-      }, 100);
-    }
-    
-    function createReconciliationChart() {
-      const ctx = document.getElementById('reconciliationChart').getContext('2d');
-      
-      // Generate months for labels
-      const months = [];
-      for (let i = 0; i < 12; i++) {
-        const date = new Date(2023, i, 1);
-        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
-      }
-      
-      // Generate random data between 80 and 100 for reconciliation percentages
-      const reconciliationData = [98, 97, 95, 92, 94, 96, 98, 99, 97, 94, 89, 91];
-      
-      new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: months,
-          datasets: [{
-            label: 'Reconciliation %',
-            data: reconciliationData,
-            fill: false,
-            borderColor: '#1ab394',
-            backgroundColor: '#1ab394',
-            tension: 0.4
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              grid: {
-                display: false
-              }
-            },
-            y: {
-              min: 80,
-              max: 100,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                callback: function(value) {
-                  return value + '%';
-                }
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              display: false
-            }
-          }
-        }
-      });
-    }
-    
-    /******************** SPEND BANKING RENDERER *************************/
-    function renderSpendBanking(container, companyName) {
-      const contentDiv = document.createElement('div');
-      contentDiv.innerHTML = `
-        <h1>Banking Analysis</h1>
-        
-        <div style="margin-bottom: 2rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
-            <div>
-              <div style="font-weight: 500; margin-bottom: 0.5rem;">Label:</div>
-              <div style="display: flex; align-items: center;">
-                <div style="width: 200px;">Transaction Merchant vs Description:</div>
-                <div style="position: relative; width: 200px;">
-                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
-                    <option selected>Merchant</option>
-                    <option>Description</option>
-                  </select>
-                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
-                </div>
-              </div>
-            </div>
-            <div>
-              <div style="font-weight: 500; margin-bottom: 0.5rem;">Dates:</div>
-              <div style="display: flex; gap: 0.5rem;">
-                <input type="text" value="11/1/2023" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
-                <input type="text" value="4/30/2025" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
-          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
-            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Banking - Cash Based P&L</h2>
-            <canvas id="cashFlowChart"></canvas>
-          </div>
-          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
-            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Banking - Expenses</h2>
-            <canvas id="expensesChart"></canvas>
-          </div>
-        </div>
-        
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
-          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
-            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Label Selected</h2>
-            <canvas id="labelSelectedChart"></canvas>
-          </div>
-          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
-            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Detail of label (largest 20 amounts)</h2>
-            <canvas id="detailLabelChart"></canvas>
-          </div>
-        </div>
-        
-        <div style="margin-top: 2rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
-          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+          <table style="width: 100%; border-collapse: collapse; margin-bottom: 1rem;">
             <thead>
-              <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
-                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">SUM</th>
-                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">Merchant / transaction detail</th>
-                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2023-11-01</th>
-                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2023-12-01</th>
-                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-01-01</th>
-                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-02-01</th>
-                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-03-01</th>
+              <tr style="border-bottom: 1px solid var(--border); background: var(--panel);">
+                <th style="padding: 0.75rem; text-align: left;">Source</th>
+                <th style="padding: 0.75rem; text-align: center;">Source Integrated</th>
+                <th style="padding: 0.75rem; text-align: center;">Source Complete</th>
+                <th style="padding: 0.75rem; text-align: center;">Source Consistent</th>
+                <th style="padding: 0.75rem; text-align: center;">Last Usable Period</th>
+                <th style="padding: 0.75rem; text-align: center;">Decision</th>
               </tr>
             </thead>
             <tbody>
               <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.75rem;">7,019,532</td>
-                <td style="padding: 0.75rem;">Amazon</td>
-                <td style="padding: 0.75rem;">359,440</td>
-                <td style="padding: 0.75rem;">447,329</td>
-                <td style="padding: 0.75rem;">358,263</td>
-                <td style="padding: 0.75rem;">246,078</td>
-                <td style="padding: 0.75rem;">259,732</td>
+                <td style="padding: 0.75rem; font-weight: 500;">Banking</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span></td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span> 98%</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span> 94%</td>
+                <td style="padding: 0.75rem; text-align: center;">Apr 2023</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(0, 180, 120, 0.2); color: rgb(0, 210, 140);">Use</span></td>
               </tr>
               <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.75rem;">3,670,000</td>
-                <td style="padding: 0.75rem;">Humancentric Ven</td>
-                <td style="padding: 0.75rem;">810,000</td>
-                <td style="padding: 0.75rem;">1,000,000</td>
-                <td style="padding: 0.75rem;">930,000</td>
-                <td style="padding: 0.75rem;">840,000</td>
-                <td style="padding: 0.75rem;">90,000</td>
+                <td style="padding: 0.75rem; font-weight: 500;">Accounting</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span></td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span> 92%</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #f8ac59;">⚠</span> 87%</td>
+                <td style="padding: 0.75rem; text-align: center;">Mar 2023</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(255, 180, 0, 0.2); color: rgb(255, 180, 0);">Use with caution</span></td>
               </tr>
               <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.75rem;">1,250,000</td>
-                <td style="padding: 0.75rem;">Currency Cloud</td>
-                <td style="padding: 0.75rem;">-</td>
-                <td style="padding: 0.75rem;">-</td>
-                <td style="padding: 0.75rem;">-</td>
-                <td style="padding: 0.75rem;">100,000</td>
-                <td style="padding: 0.75rem;">400,000</td>
-              </tr>
-              <tr style="border-bottom: 1px solid var(--border);">
-                <td style="padding: 0.75rem;">1,096,879</td>
-                <td style="padding: 0.75rem;">Kanter</td>
-                <td style="padding: 0.75rem;">50,604</td>
-                <td style="padding: 0.75rem;">-</td>
-                <td style="padding: 0.75rem;">170,781</td>
-                <td style="padding: 0.75rem;">51,520</td>
-                <td style="padding: 0.75rem;">77,527</td>
+                <td style="padding: 0.75rem; font-weight: 500;">Payment Processor</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span></td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span> 100%</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="color: #1ab394;">✓</span> 96%</td>
+                <td style="padding: 0.75rem; text-align: center;">Apr 2023</td>
+                <td style="padding: 0.75rem; text-align: center;"><span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(0, 180, 120, 0.2); color: rgb(0, 210, 140);">Use</span></td>
               </tr>
             </tbody>
           </table>
+          
+          <div style="padding: 1rem; background: var(--panel); border-radius: 4px;">
+            <h3 style="font-size: 1rem; margin-bottom: 0.5rem;">Summary Decision</h3>
+            <p style="margin-bottom: 0; font-size: 0.9rem;">
+              <strong>Primary data source:</strong> Banking (latest data through Apr 2023)<br>
+              <strong>Secondary data source:</strong> Payment Processor (for revenue validation)<br>
+              <strong>Notes:</strong> Accounting data should be used with caution due to consistency issues with revenue recognition timing.
+            </p>
+          </div>
         </div>
-      `;
-      container.appendChild(contentDiv);
-      
-      // Create charts
-      setTimeout(() => {
-        createCashFlowChart();
-        createExpensesChart();
-        createLabelSelectedChart();
-        createDetailLabelChart();
-      }, 100);
-    }
-    
-    function createCashFlowChart() {
-      const ctx = document.getElementById('cashFlowChart').getContext('2d');
-      
-      // Generate months for labels
-      const months = [];
-      for (let i = 0; i < 18; i++) {
-        const date = new Date(2023, 3 + i, 1);
-        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
-      }
-      
-      // Generate random data
-      const revenueData = months.map(() => Math.random() * 200000);
-      const specialInflowsData = months.map(() => Math.random() * 100000);
-      const equityData = months.map(() => Math.random() * 150000);
-      const debtInvestmentData = months.map(() => Math.random() * -150000);
-      const specialOutflowsData = months.map(() => Math.random() * -100000);
-      const reconciledIntrasCompanyData = months.map(() => Math.random() * 150000);
-      const unreconciledIntrasCompanyData = months.map(() => Math.random() * 120000);
-      const debtRepaymentData = months.map(() => Math.random() * -100000);
-      const investmentData = months.map(() => Math.random() * -120000);
-      const totalExpensesData = months.map(() => Math.random() * -200000);
-      
-      // Generate line data (total and operating cashflow)
-      const totalCashflowData = months.map(() => Math.random() * 200000 - 100000);
-      const operatingCashflowData = months.map(() => Math.random() * 250000 - 100000);
-      
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: months,
-          datasets: [
-            {
-              label: 'Revenue',
-              data: revenueData,
-              backgroundColor: '#4a89dc',
-              order: 2
-            },
-            {
-              label: 'Special inflows',
-              data: specialInflowsData,
-              backgroundColor: '#5d9cec',
-              order: 2
-            },
-            {
-              label: 'Equity',
-              data: equityData,
-              backgroundColor: '#a0d468',
-              order: 2
-            },
-            {
-              label: 'Debt Investment',
-              data: debtInvestmentData,
-              backgroundColor: '#da4453',
-              order: 2
-            },
-            {
-              label: 'Special outflows',
-              data: specialOutflowsData,
-              backgroundColor: '#ed5565',
-              order: 2
-            },
-            {
-              label: 'Reconciled Intra company',
-              data: reconciledIntrasCompanyData,
-              backgroundColor: '#8cc152',
-              order: 2
-            },
-            {
-              label: 'Unreconciled Intra company',
-              data: unreconciledIntrasCompanyData,
-              backgroundColor: '#ccd1d9',
-              order: 2
-            },
-            {
-              label: 'Debt Repayment',
-              data: debtRepaymentData,
-              backgroundColor: '#fc6e51',
-              order: 2
-            },
-            {
-              label: 'Investment',
-              data: investmentData,
-              backgroundColor: '#f6bb42',
-              order: 2
-            },
-            {
-              label: 'Total Expenses',
-              data: totalExpensesData,
-              backgroundColor: '#37bc9b',
-              order: 2
-            },
-            {
-              label: 'Total Cashflow',
-              data: totalCashflowData,
-              type: 'line',
-              borderColor: '#000',
-              borderWidth: 2,
-              pointRadius: 0,
-              borderDash: [5, 5],
-              fill: false,
-              order: 1
-            },
-            {
-              label: 'Op. Cashflow',
-              data: operatingCashflowData,
-              type: 'line',
-              borderColor: '#3b5bdb',
-              borderWidth: 2,
-              pointRadius: 0,
-              fill: false,
-              order: 0
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              stacked: true,
-              grid: {
-                display: false
-              }
-            },
-            y: {
-              stacked: true,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                callback: function(value) {
-                  if (value === 0) return '0';
-                  return value / 1000 + 'K';
-                }
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'right',
-              labels: {
-                boxWidth: 12,
-                padding: 10,
-                font: {
-                  size: 10
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-    
-    function createExpensesChart() {
-      const ctx = document.getElementById('expensesChart').getContext('2d');
-      
-      // Generate months for labels
-      const months = [];
-      for (let i = 0; i < 18; i++) {
-        const date = new Date(2023, 3 + i, 1);
-        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
-      }
-      
-      // Generate random data for expense categories
-      const checkDepositsData = months.map(() => Math.random() * -20000);
-      const refundsData = months.map(() => Math.random() * -25000);
-      const overdraftData = months.map(() => Math.random() * -15000);
-      const chargesFeesData = months.map(() => Math.random() * -30000);
-      const advertisingData = months.map(() => Math.random() * -40000);
-      const travelData = months.map(() => Math.random() * -20000);
-      const utilitiesData = months.map(() => Math.random() * -15000);
-      const checkOutflowsData = months.map(() => Math.random() * -35000);
-      const atmCashOutflowsData = months.map(() => Math.random() * -10000);
-      const rentData = months.map(() => Math.random() * -50000);
-      const p2pTransfersData = months.map(() => Math.random() * -45000);
-      const softwareData = months.map(() => Math.random() * -20000);
-      
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: months,
-          datasets: [
-            {
-              label: 'Check Deposits',
-              data: checkDepositsData,
-              backgroundColor: '#f5f7fa',
-              order: 2
-            },
-            {
-              label: 'Refunds',
-              data: refundsData,
-              backgroundColor: '#ccd1d9',
-              order: 2
-            },
-            {
-              label: 'Overdraft/NSF Fees',
-              data: overdraftData,
-              backgroundColor: '#f6bb42',
-              order: 2
-            },
-            {
-              label: 'Charges/Fees',
-              data: chargesFeesData,
-              backgroundColor: '#5d9cec',
-              order: 2
-            },
-            {
-              label: 'Advertising',
-              data: advertisingData,
-              backgroundColor: '#fc6e51',
-              order: 2
-            },
-            {
-              label: 'Travel',
-              data: travelData,
-              backgroundColor: '#a0d468',
-              order: 2
-            },
-            {
-              label: 'Utilities',
-              data: utilitiesData,
-              backgroundColor: '#ffce54',
-              order: 2
-            },
-            {
-              label: 'Check Outflows',
-              data: checkOutflowsData,
-              backgroundColor: '#ac92ec',
-              order: 2
-            },
-            {
-              label: 'ATM Cash Outflows',
-              data: atmCashOutflowsData,
-              backgroundColor: '#ec87c0',
-              order: 2
-            },
-            {
-              label: 'Rent',
-              data: rentData,
-              backgroundColor: '#48cfad',
-              order: 2
-            },
-            {
-              label: 'P2P Transfers',
-              data: p2pTransfersData,
-              backgroundColor: '#4fc1e9',
-              order: 2
-            },
-            {
-              label: 'Software',
-              data: softwareData,
-              backgroundColor: '#8cc152',
-              order: 2
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              stacked: true,
-              grid: {
-                display: false
-              }
-            },
-            y: {
-              stacked: true,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                callback: function(value) {
-                  if (value === 0) return '0';
-                  return value / 1000 + 'K';
-                }
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'right',
-              labels: {
-                boxWidth: 12,
-                padding: 10,
-                font: {
-                  size: 10
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-    
-    function createLabelSelectedChart() {
-      const ctx = document.getElementById('labelSelectedChart').getContext('2d');
-      
-      // Generate quarters for labels
-      const quarters = [
-        '2023-Q3', '2023-Q4', '2024-Q1', '2024-Q2', '2024-Q3', '2024-Q4', 
-        '2024-Q5', '2024-Q6', '2024-Q7', '2024-Q8', '2024-Q9', '2024-Q10',
-        '2024-Q11', '2024-Q12', '2025-Q1'
-      ];
-      
-      // Mock data with specific values to match screenshot
-      const data = [
-        89395, 117543, 74696, 88861, 81595, 121135, 98432, 106669, 
-        142849, 103539, 84851, 111108, 87951
-      ];
-      
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: quarters,
-          datasets: [{
-            label: 'Label Selected',
-            data: data,
-            backgroundColor: '#4a89dc',
-            barPercentage: 0.6
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              grid: {
-                display: false
-              }
-            },
-            y: {
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                callback: function(value) {
-                  if (value === 0) return '0';
-                  return value.toLocaleString();
-                }
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              display: false
-            },
-            datalabels: {
-              align: 'top',
-              anchor: 'end',
-              color: 'white',
-              formatter: function(value) {
-                return value.toLocaleString();
-              }
-            }
-          }
-        }
-      });
-    }
-    
-    function createDetailLabelChart() {
-      const ctx = document.getElementById('detailLabelChart').getContext('2d');
-      
-      // Generate quarters for labels
-      const quarters = [
-        '2023-11', '2023-12', '2024-01', '2024-02', '2024-03', '2024-04', 
-        '2024-05', '2024-06', '2024-07', '2024-08', '2024-09', '2024-10',
-        '2024-11', '2024-12', '2025-01'
-      ];
-      
-      // Generate multiple mock datasets with specific values
-      const dataset1 = quarters.map(() => Math.random() * 400000 + 100000);
-      const dataset2 = quarters.map(() => Math.random() * 300000 + 100000);
-      const dataset3 = quarters.map(() => Math.random() * 200000 + 50000);
-      const dataset4 = quarters.map(() => Math.random() * 100000 + 50000);
-      const dataset5 = quarters.map(() => Math.random() * 150000 + 50000);
-      
-      new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: quarters,
-          datasets: [
-            {
-              label: 'Amazon',
-              data: dataset1,
-              backgroundColor: '#da4453',
-              stack: 'Stack 0'
-            },
-            {
-              label: 'Humancentric',
-              data: dataset2,
-              backgroundColor: '#4a89dc',
-              stack: 'Stack 0'
-            },
-            {
-              label: 'Currency Cloud',
-              data: dataset3,
-              backgroundColor: '#f6bb42',
-              stack: 'Stack 0'
-            },
-            {
-              label: 'Kanter',
-              data: dataset4,
-              backgroundColor: '#8cc152',
-              stack: 'Stack 0'
-            },
-            {
-              label: 'Others',
-              data: dataset5,
-              backgroundColor: '#967adc',
-              stack: 'Stack 0'
-            }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: {
-            x: {
-              stacked: true,
-              grid: {
-                display: false
-              }
-            },
-            y: {
-              stacked: true,
-              grid: {
-                color: 'rgba(255, 255, 255, 0.1)'
-              },
-              ticks: {
-                callback: function(value) {
-                  if (value === 0) return '0';
-                  return (value / 1000000).toFixed(1) + 'M';
-                }
-              }
-            }
-          },
-          plugins: {
-            legend: {
-              display: true,
-              position: 'right',
-              labels: {
-                boxWidth: 12,
-                padding: 8,
-                font: {
-                  size: 10
-                }
-              }
-            }
-          }
-        }
-      });
-    }
-
-    /******************** DATA GATHERING RENDERER *************************/
-    function renderDataGathering(container, companyName) {
-      const contentDiv = document.createElement('div');
-      contentDiv.innerHTML = `
-        <h1>Data Gathering</h1>
         
         <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
           <!-- Source Readiness Section -->
@@ -2682,7 +2224,7 @@
                 </div>
               </div>
               
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+              <div class="copilot-comment" style="margin-bottom: 0;">
                 <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Missing Data</h3>
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                   <thead>
@@ -2690,7 +2232,7 @@
                       <th style="text-align: left; padding: 0.5rem 0;">Data Source</th>
                       <th style="text-align: left; padding: 0.5rem 0;">Missing Elements</th>
                       <th style="text-align: left; padding: 0.5rem 0;">Impact</th>
-                    </tr>
+              </tr>
                   </thead>
                   <tbody>
                     <tr style="border-bottom: 1px solid var(--border);">
@@ -2728,12 +2270,12 @@
             <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Consistency</h2>
             
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+              <div class="copilot-comment" style="margin-bottom: 0;">
                 <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--muted);">Monthly Reconciliation Status</h3>
                 <canvas id="reconciliationChart" height="220"></canvas>
               </div>
               
-              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+              <div class="copilot-comment" style="margin-bottom: 0;">
                 <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Consistency Issues</h3>
                 <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
                   <thead>
@@ -2741,7 +2283,7 @@
                       <th style="text-align: left; padding: 0.5rem 0;">Issue Type</th>
                       <th style="text-align: left; padding: 0.5rem 0;">Count</th>
                       <th style="text-align: left; padding: 0.5rem 0;">Severity</th>
-                    </tr>
+              </tr>
                   </thead>
                   <tbody>
                     <tr style="border-bottom: 1px solid var(--border);">
@@ -2856,6 +2398,11 @@
       const contentDiv = document.createElement('div');
       contentDiv.innerHTML = `
         <h1>Banking Analysis</h1>
+        
+        <!-- New Copilot Comment -->
+        <div class="copilot-comment">
+          <p><span>🤖</span> <strong>Copilot Analysis:</strong> Banking spend patterns show excellent cash flow management with consistent payment cycles. Revenue inflows show 32% increase year-over-year, with stable month-to-month variance (avg. 8%). Expenses are well-categorized, with R&D and marketing accounting for 65% of total spend. No concerning anomalies detected in transaction patterns. Notable improvement in account reconciliation since implementing accounting integrations.</p>
+        </div>
         
         <div style="margin-bottom: 2rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
@@ -3432,144 +2979,10 @@
       contentDiv.innerHTML = `
         <h1>Balance Sheet Labeling</h1>
         
-        <style>
-           /* Main container */
-           .bs-container {
-             border: 1px solid var(--border);
-             border-radius: 8px;
-             overflow: hidden;
-             background: var(--bg);
-           }
-           
-           /* Table basics */
-           .bs-table {
-             width: 100%;
-             border-collapse: collapse;
-             font-size: 0.85rem;
-           }
-           .bs-table th {
-             padding: 0.75rem;
-             text-align: left;
-             position: sticky;
-             top: 0;
-             background: var(--panel);
-             z-index: 10;
-             border-bottom: 1px solid var(--border);
-           }
-           .bs-table td {
-             padding: 0.75rem;
-             border-bottom: 1px solid var(--border);
-           }
-           
-           /* Level 1 - Top level categories (non-movable) */
-           .bs-level1 {
-             font-weight: 700;
-             font-size: 0.95rem;
-             background: var(--panel);
-             cursor: not-allowed;
-           }
-           .bs-level1 td:first-child {
-             border-left: 3px solid var(--accent);
-           }
-           .bs-level1:hover {
-             background: var(--panel);
-           }
-           
-           /* Level 2 - Subcategories (non-movable) */
-           .bs-level2 {
-             font-weight: 600;
-             background: rgba(26, 26, 26, 0.6);
-             cursor: not-allowed;
-           }
-           .bs-level2 td:first-child {
-             padding-left: 2rem !important;
-             border-left: 2px solid var(--border);
-           }
-           .bs-level2:hover {
-             background: rgba(26, 26, 26, 0.6);
-           }
-           
-           /* Level 3 - Sub-subcategories (non-movable) */
-           .bs-level3 {
-             font-weight: 500;
-             background: rgba(26, 26, 26, 0.4);
-             cursor: not-allowed;
-           }
-           .bs-level3 td:first-child {
-             padding-left: 3.5rem !important;
-             border-left: 1px solid var(--border);
-           }
-           .bs-level3:hover {
-             background: rgba(26, 26, 26, 0.4);
-           }
-           
-           /* Level 4 - Line items (movable) */
-           .bs-level4 {
-             background: transparent;
-           }
-           .bs-level4 td:first-child {
-             padding-left: 5rem !important;
-           }
-           .bs-level4.draggable {
-             cursor: move;
-           }
-           .bs-level4.dragging {
-             opacity: 0.5;
-             background: rgba(255, 104, 51, 0.2);
-           }
-           
-           /* Icons for fixed vs movable */
-           .bs-fixed-icon {
-             color: var(--muted);
-             margin-right: 0.5rem;
-             font-size: 0.8rem;
-           }
-           .bs-drag-icon {
-             color: var(--muted);
-             margin-right: 0.5rem;
-             font-size: 0.8rem;
-           }
-           
-           /* Other styles */
-           .bs-actions {
-             margin-bottom: 1rem;
-             display: flex;
-             justify-content: space-between;
-           }
-           .bs-button {
-             background: var(--panel);
-             border: 1px solid var(--border);
-             color: var(--text);
-             padding: 0.5rem 1rem;
-             border-radius: 4px;
-             cursor: pointer;
-           }
-           .bs-button:hover {
-             background: var(--border);
-           }
-           .bs-button.primary {
-             background: var(--accent);
-             border: 1px solid var(--accent);
-           }
-           .bs-button.primary:hover {
-             background: #ff5820;
-           }
-           .bs-number {
-             text-align: right;
-           }
-           .bs-negative {
-             color: #ed5565;
-           }
-           .bs-positive {
-             color: #1ab394;
-           }
-           .bs-header-row {
-             background: var(--panel) !important;
-           }
-           .dragging-over {
-             border-bottom: 2px solid var(--accent);
-           }
-         </style>
+        <!-- New Copilot Badge -->
+        <div class="copilot-badge">
+          <span>🤖</span> Reviewed by Copilot
+        </div>
         
         <div class="bs-actions">
           <div>
@@ -3964,231 +3377,6 @@
       setupDragAndDrop('bsTable');
     }
 
-    /******************** P&L LABELING RENDERER *************************/
-    function renderPLLabeling(container) {
-      // Create the P&L Labeling content
-      const contentDiv = document.createElement('div');
-      contentDiv.innerHTML = `
-        <h1>Profit & Loss Labeling</h1>
-        
-        <div style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
-          <div>
-            <button class="bs-button">Reset</button>
-            <button class="bs-button">Undo</button>
-          </div>
-          <div>
-            <button class="bs-button primary">Save Changes</button>
-          </div>
-        </div>
-        
-        <div class="bs-container">
-          <table class="bs-table" id="plTable">
-            <thead>
-              <tr class="bs-header-row">
-                <th style="width: 35%;">Category / Account</th>
-                <th style="width: 9%;">1/31/2023</th>
-                <th style="width: 9%;">2/28/2023</th>
-                <th style="width: 9%;">3/31/2023</th>
-                <th style="width: 9%;">4/30/2023</th>
-                <th style="width: 9%;">5/31/2023</th>
-                <th style="width: 9%;">6/30/2023</th>
-                <th style="width: 11%;">7/31/2023</th>
-              </tr>
-            </thead>
-            <tbody>
-              <!-- Level 1 -->
-              <tr class="bs-level1">
-                <td><span class="bs-fixed-icon">📌</span>Revenue</td>
-                <td class="bs-number">$150,000</td>
-                <td class="bs-number">$160,000</td>
-                <td class="bs-number">$155,000</td>
-                <td class="bs-number">$165,000</td>
-                <td class="bs-number">$170,000</td>
-                <td class="bs-number">$175,000</td>
-                <td class="bs-number">$180,000</td>
-              </tr>
-              
-              <!-- Level 2 -->
-              <tr class="bs-level2">
-                <td><span class="bs-fixed-icon">📌</span>Product Revenue</td>
-                <td class="bs-number">$120,000</td>
-                <td class="bs-number">$130,000</td>
-                <td class="bs-number">$125,000</td>
-                <td class="bs-number">$135,000</td>
-                <td class="bs-number">$140,000</td>
-                <td class="bs-number">$145,000</td>
-                <td class="bs-number">$150,000</td>
-              </tr>
-              
-              <!-- Level 3 - Draggable items -->
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Product A</td>
-                <td class="bs-number">$70,000</td>
-                <td class="bs-number">$75,000</td>
-                <td class="bs-number">$73,000</td>
-                <td class="bs-number">$77,000</td>
-                <td class="bs-number">$80,000</td>
-                <td class="bs-number">$83,000</td>
-                <td class="bs-number">$85,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Product B</td>
-                <td class="bs-number">$50,000</td>
-                <td class="bs-number">$55,000</td>
-                <td class="bs-number">$52,000</td>
-                <td class="bs-number">$58,000</td>
-                <td class="bs-number">$60,000</td>
-                <td class="bs-number">$62,000</td>
-                <td class="bs-number">$65,000</td>
-              </tr>
-              
-              <!-- Level 2 -->
-              <tr class="bs-level2">
-                <td><span class="bs-fixed-icon">📌</span>Service Revenue</td>
-                <td class="bs-number">$30,000</td>
-                <td class="bs-number">$30,000</td>
-                <td class="bs-number">$30,000</td>
-                <td class="bs-number">$30,000</td>
-                <td class="bs-number">$30,000</td>
-                <td class="bs-number">$30,000</td>
-                <td class="bs-number">$30,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Consulting</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Maintenance</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-                <td class="bs-number">$15,000</td>
-              </tr>
-              
-              <!-- Level 1 -->
-              <tr class="bs-level1">
-                <td><span class="bs-fixed-icon">📌</span>Expenses</td>
-                <td class="bs-number">$100,000</td>
-                <td class="bs-number">$105,000</td>
-                <td class="bs-number">$103,000</td>
-                <td class="bs-number">$107,000</td>
-                <td class="bs-number">$110,000</td>
-                <td class="bs-number">$112,000</td>
-                <td class="bs-number">$115,000</td>
-              </tr>
-              
-              <!-- Level 2 -->
-              <tr class="bs-level2">
-                <td><span class="bs-fixed-icon">📌</span>Cost of Goods Sold</td>
-                <td class="bs-number">$60,000</td>
-                <td class="bs-number">$63,000</td>
-                <td class="bs-number">$62,000</td>
-                <td class="bs-number">$64,000</td>
-                <td class="bs-number">$66,000</td>
-                <td class="bs-number">$67,000</td>
-                <td class="bs-number">$69,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Materials</td>
-                <td class="bs-number">$40,000</td>
-                <td class="bs-number">$42,000</td>
-                <td class="bs-number">$41,000</td>
-                <td class="bs-number">$43,000</td>
-                <td class="bs-number">$44,000</td>
-                <td class="bs-number">$45,000</td>
-                <td class="bs-number">$46,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Labor</td>
-                <td class="bs-number">$20,000</td>
-                <td class="bs-number">$21,000</td>
-                <td class="bs-number">$21,000</td>
-                <td class="bs-number">$21,000</td>
-                <td class="bs-number">$22,000</td>
-                <td class="bs-number">$22,000</td>
-                <td class="bs-number">$23,000</td>
-              </tr>
-              
-              <!-- Level 2 -->
-              <tr class="bs-level2">
-                <td><span class="bs-fixed-icon">📌</span>Operating Expenses</td>
-                <td class="bs-number">$40,000</td>
-                <td class="bs-number">$42,000</td>
-                <td class="bs-number">$41,000</td>
-                <td class="bs-number">$43,000</td>
-                <td class="bs-number">$44,000</td>
-                <td class="bs-number">$45,000</td>
-                <td class="bs-number">$46,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Salaries</td>
-                <td class="bs-number">$25,000</td>
-                <td class="bs-number">$26,000</td>
-                <td class="bs-number">$25,000</td>
-                <td class="bs-number">$26,000</td>
-                <td class="bs-number">$27,000</td>
-                <td class="bs-number">$27,000</td>
-                <td class="bs-number">$28,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Rent</td>
-                <td class="bs-number">$10,000</td>
-                <td class="bs-number">$10,000</td>
-                <td class="bs-number">$10,000</td>
-                <td class="bs-number">$10,000</td>
-                <td class="bs-number">$10,000</td>
-                <td class="bs-number">$11,000</td>
-                <td class="bs-number">$11,000</td>
-              </tr>
-              
-              <tr class="bs-level3 draggable" draggable="true">
-                <td><span class="bs-drag-icon">≡</span>Utilities</td>
-                <td class="bs-number">$5,000</td>
-                <td class="bs-number">$6,000</td>
-                <td class="bs-number">$6,000</td>
-                <td class="bs-number">$7,000</td>
-                <td class="bs-number">$7,000</td>
-                <td class="bs-number">$7,000</td>
-                <td class="bs-number">$7,000</td>
-              </tr>
-              
-              <!-- Level 1 -->
-              <tr class="bs-level1">
-                <td><span class="bs-fixed-icon">📌</span>Net Income</td>
-                <td class="bs-number bs-positive">$50,000</td>
-                <td class="bs-number bs-positive">$55,000</td>
-                <td class="bs-number bs-positive">$52,000</td>
-                <td class="bs-number bs-positive">$58,000</td>
-                <td class="bs-number bs-positive">$60,000</td>
-                <td class="bs-number bs-positive">$63,000</td>
-                <td class="bs-number bs-positive">$65,000</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      `;
-      container.appendChild(contentDiv);
-      
-      // Add drag and drop functionality
-      setupDragAndDrop('plTable');
-    }
-
     /******************** DRAG AND DROP FUNCTIONALITY *************************/
     function setupDragAndDrop(tableId) {
       const table = document.getElementById(tableId);
@@ -4283,6 +3471,9 @@
           loadCompanyScreen(item.dataset.companyScreen);
         });
       });
+      
+      // Initialize the chat with sample conversation
+      initializeChat();
     });
 
     /******************** BANKING LABELING RENDERER *************************/
@@ -4292,7 +3483,12 @@
       contentDiv.innerHTML = `
         <h1>Banking Labeling</h1>
         
-        <div style="margin-bottom: 1rem; display: flex; justify-content: space-between;">
+        <!-- New Copilot Badge -->
+        <div class="copilot-badge">
+          <span>🤖</span> Reviewed by Copilot
+        </div>
+        
+        <div class="bs-actions">
           <div>
             <button class="bs-button">Reset</button>
             <button class="bs-button">Undo</button>
@@ -4969,6 +4165,11 @@
       contentDiv.innerHTML = `
         <h1>Graphs & Metric Decisions</h1>
         
+        <!-- New Copilot Suggestion Button -->
+        <button class="copilot-suggestion-btn">
+          <span>🤖</span> Apply Copilot Suggestion
+        </button>
+        
         <!-- Category Header - Revenue -->
         <div style="background: #3498db; color: white; font-weight: 600; padding: 0.5rem 1rem; border-radius: 4px 4px 0 0; margin-top: 1.5rem;">
           Revenue
@@ -5482,6 +4683,495 @@
           }
         }
       });
+    }
+    
+    /******************** DECISIONS RENDERER *************************/
+    function renderDecisions(container, companyName) {
+      // Create the Decisions content
+      const contentDiv = document.createElement('div');
+      
+      // Create a main header for Decisions
+      contentDiv.innerHTML = `
+        <h1>Decisions</h1>
+        
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; gap: 1rem; margin-bottom: 1.5rem;">
+            <button class="bs-button active" id="securitiesTab">Securities</button>
+            <button class="bs-button" id="finalDecisionsTab">Final Decisions</button>
+          </div>
+          
+          <!-- Securities Section -->
+          <div id="securitiesSection">
+            <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Securities</h2>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem;">
+                  <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">UCC Filing</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <tr>
+                      <td style="padding: 0.5rem 0; width: 40%;">Existing UCC?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(0, 180, 120, 0.2); color: rgb(0, 210, 140);">Yes</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">UCC Required?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(0, 180, 120, 0.2); color: rgb(0, 210, 140);">Yes</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Filing Date</td>
+                      <td style="padding: 0.5rem 0;">May 15, 2023</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Expiration Date</td>
+                      <td style="padding: 0.5rem 0;">May 15, 2028</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Filing Number</td>
+                      <td style="padding: 0.5rem 0;">UCC-2023-05789</td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem;">
+                  <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Personal Guarantee (PG)</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <tr>
+                      <td style="padding: 0.5rem 0; width: 40%;">Existing PG?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(0, 180, 120, 0.2); color: rgb(0, 210, 140);">Yes</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">PG Required?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(0, 180, 120, 0.2); color: rgb(0, 210, 140);">Yes</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Guarantor</td>
+                      <td style="padding: 0.5rem 0;">John Smith (CEO)</td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Signing Date</td>
+                      <td style="padding: 0.5rem 0;">May 15, 2023</td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem;">
+                  <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Deposit</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <tr>
+                      <td style="padding: 0.5rem 0; width: 40%;">Existing Deposit?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(255, 80, 80, 0.2); color: rgb(255, 120, 120);">No</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Deposit Required?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(255, 80, 80, 0.2); color: rgb(255, 120, 120);">No</span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1.25rem;">
+                  <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">DACA</h3>
+                  <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                    <tr>
+                      <td style="padding: 0.5rem 0; width: 40%;">Existing DACA?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(255, 80, 80, 0.2); color: rgb(255, 120, 120);">No</span>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">DACA Required?</td>
+                      <td style="padding: 0.5rem 0;">
+                        <span style="display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; background: rgba(255, 80, 80, 0.2); color: rgb(255, 120, 120);">No</span>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Final Decisions Section (hidden initially) -->
+          <div id="finalDecisionsSection" style="display: none;">
+            <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Credit Limit</h2>
+              
+              <div style="display: flex; gap: 2rem; margin-bottom: 1.5rem;">
+                <div style="flex: 1;">
+                  <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Current Limit</h3>
+                  <div style="font-size: 1.75rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem;">$250,000</div>
+                  <div style="font-size: 0.9rem; color: var(--muted);">Last updated: Mar 12, 2023</div>
+                </div>
+                
+                <div style="flex: 1;">
+                  <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Proposed Limit</h3>
+                  <input type="text" value="$350,000" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px; font-size: 1.25rem; font-weight: 600;">
+                </div>
+                
+                <div style="flex: 1;">
+                  <h3 style="font-size: 1rem; margin-bottom: 0.75rem;">Change</h3>
+                  <div style="font-size: 1.75rem; font-weight: 600; color: #1ab394; margin-bottom: 0.5rem;">+$100,000</div>
+                  <div style="font-size: 0.9rem; color: var(--muted);">(+40%)</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Credit Limit Recommendations</h2>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1rem;">
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem;">
+                  <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--muted);">Model Recommendation</h3>
+                  <div style="font-size: 1.25rem; font-weight: 600;">$350,000</div>
+                </div>
+                
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem;">
+                  <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--muted);">Revenue Based (3x MRR)</h3>
+                  <div style="font-size: 1.25rem; font-weight: 600;">$325,000</div>
+                </div>
+                
+                <div style="background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 1rem;">
+                  <h3 style="font-size: 0.9rem; margin-bottom: 0.5rem; color: var(--muted);">Cash Flow Based</h3>
+                  <div style="font-size: 1.25rem; font-weight: 600;">$375,000</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Decision</h2>
+              
+              <div style="margin-bottom: 1rem;">
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Recommendation:</div>
+                <div style="position: relative; width: 100%; margin-bottom: 1rem;">
+                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                    <option selected>Approve</option>
+                    <option>Decline</option>
+                    <option>Pending Additional Information</option>
+                  </select>
+                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                </div>
+                
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">APR:</div>
+                <input type="text" value="16.5%" style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px; margin-bottom: 1rem;">
+                
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Payment Terms:</div>
+                <div style="position: relative; width: 100%; margin-bottom: 1rem;">
+                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                    <option selected>Net 30</option>
+                    <option>Net 45</option>
+                    <option>Net 60</option>
+                  </select>
+                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Comments</h2>
+              
+              <textarea style="width: 100%; height: 150px; padding: 0.75rem; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 4px; resize: vertical; margin-bottom: 1rem;" placeholder="Add your comments here...">Based on strong revenue growth of 50% YoY and improved cash position, we recommend increasing credit limit to $350,000. The company has maintained excellent payment history and their B credit score has improved from C last year.</textarea>
+            </div>
+            
+            <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; margin-bottom: 1.5rem;">
+              <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Contingencies / Questions</h2>
+              
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <input type="checkbox" id="contingency1">
+                <label for="contingency1">Require updated financial statements for Q1 2023</label>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;">
+                <input type="checkbox" id="contingency2" checked>
+                <label for="contingency2">Obtain verification of largest client contract renewal</label>
+              </div>
+              
+              <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+                <input type="checkbox" id="contingency3">
+                <label for="contingency3">Request bank statements for the last 3 months</label>
+              </div>
+              
+              <input type="text" placeholder="Add new contingency..." style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--bg); color: var(--text); border-radius: 4px;">
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 1rem;">
+              <button class="bs-button">Save Draft</button>
+              <button class="bs-button primary">Submit Decision</button>
+            </div>
+          </div>
+        </div>
+      `;
+      
+      container.appendChild(contentDiv);
+      
+      // Add tab switching functionality
+      const securitiesTab = container.querySelector('#securitiesTab');
+      const finalDecisionsTab = container.querySelector('#finalDecisionsTab');
+      const securitiesSection = container.querySelector('#securitiesSection');
+      const finalDecisionsSection = container.querySelector('#finalDecisionsSection');
+      
+      securitiesTab.addEventListener('click', () => {
+        securitiesTab.classList.add('active');
+        finalDecisionsTab.classList.remove('active');
+        securitiesSection.style.display = 'block';
+        finalDecisionsSection.style.display = 'none';
+      });
+      
+      finalDecisionsTab.addEventListener('click', () => {
+        securitiesTab.classList.remove('active');
+        finalDecisionsTab.classList.add('active');
+        securitiesSection.style.display = 'none';
+        finalDecisionsSection.style.display = 'block';
+      });
+      
+      // Initialize the active tab style
+      document.head.insertAdjacentHTML('beforeend', `
+        <style>
+          .bs-button.active {
+            background: var(--accent);
+            color: white;
+          }
+        </style>
+      `);
+    }
+
+    /******************** PROFIT & LOSS LABELING RENDERER *************************/
+    function renderPLLabeling(container) {
+      // Create the P&L Labeling content
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Profit & Loss Labeling</h1>
+        
+        <!-- New Copilot Badge -->
+        <div class="copilot-badge">
+          <span>🤖</span> Reviewed by Copilot
+        </div>
+        
+        <div class="bs-actions">
+          <div>
+            <button class="bs-button">Reset</button>
+            <button class="bs-button">Undo</button>
+          </div>
+          <div>
+            <button class="bs-button primary">Save Changes</button>
+          </div>
+        </div>
+        
+        <div class="bs-container">
+          <table class="bs-table" id="plTable">
+            <thead>
+              <tr class="bs-header-row">
+                <th style="width: 35%;">Category / Account</th>
+                <th style="width: 9%;">1/31/2023</th>
+                <th style="width: 9%;">2/28/2023</th>
+                <th style="width: 9%;">3/31/2023</th>
+                <th style="width: 9%;">4/30/2023</th>
+                <th style="width: 9%;">5/31/2023</th>
+                <th style="width: 9%;">6/30/2023</th>
+                <th style="width: 11%;">7/31/2023</th>
+              </tr>
+            </thead>
+            <tbody>
+              <!-- Level 1 -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Revenue</td>
+                <td class="bs-number">$150,000</td>
+                <td class="bs-number">$160,000</td>
+                <td class="bs-number">$155,000</td>
+                <td class="bs-number">$165,000</td>
+                <td class="bs-number">$170,000</td>
+                <td class="bs-number">$175,000</td>
+                <td class="bs-number">$180,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Product Revenue</td>
+                <td class="bs-number">$120,000</td>
+                <td class="bs-number">$130,000</td>
+                <td class="bs-number">$125,000</td>
+                <td class="bs-number">$135,000</td>
+                <td class="bs-number">$140,000</td>
+                <td class="bs-number">$145,000</td>
+                <td class="bs-number">$150,000</td>
+              </tr>
+              
+              <!-- Level 3 - Draggable items -->
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Product A</td>
+                <td class="bs-number">$70,000</td>
+                <td class="bs-number">$75,000</td>
+                <td class="bs-number">$73,000</td>
+                <td class="bs-number">$77,000</td>
+                <td class="bs-number">$80,000</td>
+                <td class="bs-number">$83,000</td>
+                <td class="bs-number">$85,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Product B</td>
+                <td class="bs-number">$50,000</td>
+                <td class="bs-number">$55,000</td>
+                <td class="bs-number">$52,000</td>
+                <td class="bs-number">$58,000</td>
+                <td class="bs-number">$60,000</td>
+                <td class="bs-number">$62,000</td>
+                <td class="bs-number">$65,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Service Revenue</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+                <td class="bs-number">$30,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Consulting</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Maintenance</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+                <td class="bs-number">$15,000</td>
+              </tr>
+              
+              <!-- Level 1 -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Expenses</td>
+                <td class="bs-number">$100,000</td>
+                <td class="bs-number">$105,000</td>
+                <td class="bs-number">$103,000</td>
+                <td class="bs-number">$107,000</td>
+                <td class="bs-number">$110,000</td>
+                <td class="bs-number">$112,000</td>
+                <td class="bs-number">$115,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Cost of Goods Sold</td>
+                <td class="bs-number">$60,000</td>
+                <td class="bs-number">$63,000</td>
+                <td class="bs-number">$62,000</td>
+                <td class="bs-number">$64,000</td>
+                <td class="bs-number">$66,000</td>
+                <td class="bs-number">$67,000</td>
+                <td class="bs-number">$69,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Materials</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$42,000</td>
+                <td class="bs-number">$41,000</td>
+                <td class="bs-number">$43,000</td>
+                <td class="bs-number">$44,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$46,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Labor</td>
+                <td class="bs-number">$20,000</td>
+                <td class="bs-number">$21,000</td>
+                <td class="bs-number">$21,000</td>
+                <td class="bs-number">$21,000</td>
+                <td class="bs-number">$22,000</td>
+                <td class="bs-number">$22,000</td>
+                <td class="bs-number">$23,000</td>
+              </tr>
+              
+              <!-- Level 2 -->
+              <tr class="bs-level2">
+                <td><span class="bs-fixed-icon">📌</span>Operating Expenses</td>
+                <td class="bs-number">$40,000</td>
+                <td class="bs-number">$42,000</td>
+                <td class="bs-number">$41,000</td>
+                <td class="bs-number">$43,000</td>
+                <td class="bs-number">$44,000</td>
+                <td class="bs-number">$45,000</td>
+                <td class="bs-number">$46,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Salaries</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$26,000</td>
+                <td class="bs-number">$25,000</td>
+                <td class="bs-number">$26,000</td>
+                <td class="bs-number">$27,000</td>
+                <td class="bs-number">$27,000</td>
+                <td class="bs-number">$28,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Rent</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$10,000</td>
+                <td class="bs-number">$11,000</td>
+                <td class="bs-number">$11,000</td>
+              </tr>
+              
+              <tr class="bs-level3 draggable" draggable="true">
+                <td><span class="bs-drag-icon">≡</span>Utilities</td>
+                <td class="bs-number">$5,000</td>
+                <td class="bs-number">$6,000</td>
+                <td class="bs-number">$6,000</td>
+                <td class="bs-number">$7,000</td>
+                <td class="bs-number">$7,000</td>
+                <td class="bs-number">$7,000</td>
+                <td class="bs-number">$7,000</td>
+              </tr>
+              
+              <!-- Level 1 -->
+              <tr class="bs-level1">
+                <td><span class="bs-fixed-icon">📌</span>Net Income</td>
+                <td class="bs-number bs-positive">$50,000</td>
+                <td class="bs-number bs-positive">$55,000</td>
+                <td class="bs-number bs-positive">$52,000</td>
+                <td class="bs-number bs-positive">$58,000</td>
+                <td class="bs-number bs-positive">$60,000</td>
+                <td class="bs-number bs-positive">$63,000</td>
+                <td class="bs-number bs-positive">$65,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Add drag and drop functionality
+      setupDragAndDrop('plTable');
     }
   </script>
 </body>
