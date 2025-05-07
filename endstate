@@ -1,0 +1,1909 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Parker – Underwriting Tool</title>
+
+  <!-- Google Fonts & Chart.js -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    :root {
+      --chat-width: 260px;
+      --nav-width: 220px;
+      --bg: #0f0f0f;
+      --panel: #1a1a1a;
+      --border: #2a2a2a;
+      --text: #ffffff;
+      --muted: #a3a3a3;
+      --accent: #ff6833;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: "Inter", sans-serif; }
+
+    body { display: flex; height: 100vh; background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* ---------------- CHAT (RIGHT) ---------------- */
+    .chat-sidebar { width: var(--chat-width); background: var(--panel); border-left: 1px solid var(--border); display: flex; flex-direction: column; margin-left: auto; }
+    .chat-header { padding: 1rem; font-weight: 600; border-bottom: 1px solid var(--border); }
+    .chat-messages { flex: 1; padding: 1rem; overflow-y: auto; display: flex; flex-direction: column; gap: 0.75rem; }
+    .msg { max-width: 90%; padding: 0.5rem 0.75rem; border-radius: 0.6rem; font-size: 0.85rem; }
+    .user { align-self: flex-end; background: var(--accent); }
+    .bot  { align-self: flex-start; background: var(--border); }
+    .chat-input { border-top: 1px solid var(--border); padding: 0.75rem; }
+    .chat-input input { width: 100%; padding: 0.55rem 0.75rem; border-radius: 0.4rem; border: 1px solid var(--border); background: var(--bg); color: var(--text); }
+
+    /* ---------------- NAVIGATION SIDEBAR (hidden initially) ---------------- */
+    aside { width: var(--nav-width); background: var(--panel); flex-direction: column; padding: 1rem; border-right: 1px solid var(--border); overflow-y: auto; display: none; }
+    .brand { display: flex; align-items: center; gap: 0.5rem; font-weight: 600; margin-bottom: 1.25rem; font-size: 1rem; }
+    .brand .dot { width: 10px; height: 10px; border-radius: 50%; background: linear-gradient(140deg,#d850ff,#ff6833); }
+    .back-btn { cursor: pointer; display: flex; align-items: center; background: var(--border); border-radius: 4px; padding: 0.25rem 0.5rem; margin-right: 0.5rem; font-size: 0.8rem; }
+    .back-btn:hover { background: #3a3a3a; }
+
+    .nav-item { cursor: pointer; padding: 0.55rem 0.75rem; margin: 0.15rem 0; border-radius: 0.5rem; display: flex; justify-content: space-between; align-items: center; font-size: 0.95rem; transition: background .2s; user-select:none; }
+    .nav-item:hover { background: var(--border);}  
+    .submenu { display:none; flex-direction:column; margin-left:0.75rem; }
+    .submenu a { text-decoration:none; color:var(--muted); font-size:0.8rem; padding:0.3rem 0; cursor:pointer; }
+
+    /* ---------------- MAIN ---------------- */
+    main { flex:1; overflow-y:auto; padding:2rem; }
+    h1 { font-size:1.5rem; font-weight:600; margin-bottom:1.5rem; }
+
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:1rem; }
+    .card { background:var(--panel); border:1px solid var(--border); border-radius:.75rem; padding:1rem; display:flex; flex-direction:column; }
+    .card h3 { font-size:1rem; font-weight:500; margin-bottom:.75rem; }
+    .metric { font-size:1.85rem; font-weight:600; line-height:1.2; }
+    .small { font-size:.8rem; color:var(--muted); margin-top:.25rem; }
+    canvas { width:100% !important; height:150px !important; }
+
+    /* ---------------- UNDERWRITING TABLE ---------------- */
+    .uw-table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    .uw-table th { text-align: left; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); color: var(--muted); font-weight: 500; font-size: 0.85rem; }
+    .uw-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
+    .uw-table tr { cursor: pointer; transition: background .2s; }
+    .uw-table tr:hover { background: var(--panel); }
+    .uw-table .company-name { font-weight: 500; }
+    .uw-table .review-type { font-size: 0.85rem; }
+    .tag { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; }
+    .tag-new { background: rgba(0, 180, 120, 0.2); color: rgb(0, 210, 140); }
+    .tag-reuw { background: rgba(100, 100, 255, 0.2); color: rgb(130, 130, 255); }
+    .tag-risk { background: rgba(255, 80, 80, 0.2); color: rgb(255, 120, 120); }
+    .tag-status { background: rgba(255, 180, 0, 0.2); color: rgb(255, 180, 0); }
+    .tag-done { background: rgba(120, 120, 120, 0.2); color: rgb(160, 160, 160); }
+    .reason { font-size: 0.85rem; color: var(--muted); }
+
+    /* ---------------- TABS ---------------- */
+    .tabs { display: flex; margin-bottom: 1.5rem; border-bottom: 1px solid var(--border); }
+    .tab { padding: 0.75rem 1.5rem; cursor: pointer; position: relative; font-size: 0.9rem; color: var(--muted); }
+    .tab.active { color: var(--text); }
+    .tab.active::after { content: ""; position: absolute; bottom: -1px; left: 0; width: 100%; height: 2px; background: var(--accent); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    /* ---------------- COMPANY VIEW ---------------- */
+    .company-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+    .start-uw-btn { background: var(--accent); color: var(--text); border: none; border-radius: 4px; padding: 0.6rem 1.2rem; cursor: pointer; font-weight: 500; }
+    .start-uw-btn:hover { background: #ff5820; }
+    
+    /* Company Overview Nav + Content Layout */
+    .company-overview { display: flex; gap: 2rem; }
+    .company-nav { width: 220px; flex-shrink: 0; }
+    .company-content { flex: 1; }
+    
+    /* Company Nav Styling */
+    .company-nav-item { padding: 0.75rem 1rem; cursor: pointer; border-left: 2px solid transparent; margin-bottom: 0.2rem; }
+    .company-nav-item:hover { background: rgba(255, 255, 255, 0.05); }
+    .company-nav-item.active { border-left-color: var(--accent); background: rgba(255, 255, 255, 0.05); }
+    .company-subnav { padding-left: 1rem; font-size: 0.9rem; color: var(--muted); }
+    .company-subnav-item { padding: 0.5rem 1rem; cursor: pointer; }
+    .company-subnav-item:hover { color: var(--text); }
+    
+    /* Company Info Section */
+    .info-section { margin-bottom: 2rem; }
+    .info-section h2 { font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500; }
+    .info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .info-item { background: var(--panel); border: 1px solid var(--border); padding: 1rem; border-radius: 0.5rem; }
+    .info-item-label { font-size: 0.8rem; color: var(--muted); margin-bottom: 0.25rem; }
+    .info-item-value { font-size: 1rem; }
+  </style>
+</head>
+<body>
+  <!-- NAVIGATION SIDEBAR (hidden initially) -->
+  <aside id="navSidebar">
+    <div class="brand">
+      <div class="back-btn" id="backBtn">← Back</div>
+      <span class="dot"></span>
+      <span id="brandName">Parker</span>
+    </div>
+    <div class="nav-item" id="companyBtn" data-screen="getStarted">Parker Group, Inc.</div>
+
+    <nav>
+      <div class="nav-item" data-target="uwInfo">Underwriting Information <span>▸</span></div>
+      <div class="submenu" id="uwInfo"><a data-screen="uwDetails">UW Details</a></div>
+
+      <div class="nav-item" data-screen="dataGathering">Data gathering</div>
+
+      <div class="nav-item" data-target="labelMetric">Labeling & metric calculation <span>▸</span></div>
+      <div class="submenu" id="labelMetric"><a data-screen="plLabeling">Profit & loss labeling</a><a data-screen="bsLabeling">Balance sheet labeling</a><a data-screen="bankLabeling">Banking labeling</a><a data-screen="graphsMetrics">Graphs & metric decisions</a></div>
+
+      <div class="nav-item" data-target="spend">Spend <span>▸</span></div>
+      <div class="submenu" id="spend"><a data-screen="spendBanking">Banking</a><a data-screen="spendParker">Parker</a></div>
+
+      <div class="nav-item" data-screen="scoring">Scoring</div>
+
+      <div class="nav-item" data-target="decisions">Decisions <span>▸</span></div>
+      <div class="submenu" id="decisions"><a data-screen="securities">Securities</a><a data-screen="finalDecisions">Final decisions</a></div>
+    </nav>
+  </aside>
+
+  <!-- COMPANY OVERVIEW SIDEBAR -->
+  <aside id="companyOverviewSidebar" style="display:none;">
+    <div class="brand">
+      <div class="back-btn" id="backToListBtn">← Back</div>
+      <span class="dot"></span>
+      <span id="companyOverviewName">Parker</span>
+    </div>
+    
+    <nav>
+      <div class="nav-item" data-target="companyInfo">Company information <span>▸</span></div>
+      <div class="submenu" id="companyInfo" style="display:flex;">
+        <a data-company-screen="companyDetails">Company information</a>
+        <a data-company-screen="currentOffer">Current offer</a>
+      </div>
+
+      <div class="nav-item" data-company-screen="historicalUW">Historical Underwriting</div>
+      <div class="nav-item" data-company-screen="dataConnectivity">Data connectivity</div>
+      <div class="nav-item" data-company-screen="kyb">KYB / KYC</div>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT AREA -->
+  <main id="mainContent"></main>
+  
+  <!-- CHAT SIDEBAR -->
+  <div class="chat-sidebar">
+    <div class="chat-header">Copilot</div>
+    <div class="chat-messages" id="chatMessages"><div class="msg bot">Hi! I'm your underwriting copilot – ask me anything.</div></div>
+    <div class="chat-input"><input id="chatInput" type="text" placeholder="Type a message…"></div>
+  </div>
+
+  <script>
+    /******************** CHAT LOGIC (unchanged) *************************/
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+    chatInput.addEventListener('keydown', e => { if(e.key==='Enter' && chatInput.value.trim()){ const t=chatInput.value.trim(); addMessage(t,'user'); chatInput.value=''; setTimeout(()=>addMessage('Noted! I will look into that.','bot'),600);} });
+    function addMessage(text,type){ const div=document.createElement('div'); div.className=`msg ${type}`; div.textContent=text; chatMessages.appendChild(div); chatMessages.scrollTop=chatMessages.scrollHeight; }
+
+    /******************** EXISTING NAV DROPDOWN LOGIC (unchanged) *************************/
+    document.querySelectorAll('.nav-item[data-target]').forEach(item=>{ item.addEventListener('click', ()=>{ const submenu=document.getElementById(item.dataset.target); if(submenu){ const open=submenu.style.display==='flex'; submenu.style.display=open?'none':'flex'; const arrow=item.querySelector('span:last-child'); if(arrow) arrow.textContent=open?'▸':'▾'; }});});
+
+    /******************** EXISTING SCREEN ROUTING *************************/
+    document.querySelectorAll('[data-screen]').forEach(el => { 
+      el.addEventListener('click', () => { 
+        // Check if we're in company view or UW mode
+        if (document.getElementById('companyOverviewSidebar').style.display === 'flex') {
+          // We're in company view mode, use regular load
+          loadScreen(el.dataset.screen);
+        } else {
+          // We're in UW mode, preserve the back button
+          const companyName = document.getElementById('companyBtn').textContent;
+          loadScreenWithCompanyReturn(el.dataset.screen, companyName);
+        }
+      });
+    });
+
+    function loadScreen(screen) { 
+      const main = document.getElementById('mainContent'); 
+      main.innerHTML = ''; 
+      if (screen === 'getStarted') { 
+        renderGetStarted(main);
+      } else { 
+        const h = document.createElement('h1'); 
+        h.textContent = screen.replace(/([A-Z])/g, ' $1'); 
+        h.style.fontSize = '1.25rem'; 
+        main.appendChild(h);
+      } 
+    }
+
+    /******************** ORIGINAL GET STARTED RENDERER (unchanged) *************************/
+    function renderGetStarted(container, addingToExisting) {
+      // If we're adding to existing content, don't clear the container
+      if (!addingToExisting) {
+        container.innerHTML = '';
+      }
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `<h1>Get Started</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="floatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
+      container.appendChild(contentDiv);
+      
+      const ctx = document.getElementById('floatChart').getContext('2d'); 
+      new Chart(ctx, { 
+        type: 'line', 
+        data: { 
+          labels: Array.from({length: 30}, (_, i) => `Day ${i+1}`), 
+          datasets: [{ 
+            label: 'Balance', 
+            data: Array.from({length: 30}, () => Math.random()*50+150), 
+            fill: true, 
+            tension: 0.3 
+          }, { 
+            label: 'Spend', 
+            data: Array.from({length: 30}, () => Math.random()*60+50), 
+            tension: 0.3, 
+            borderDash: [5, 5] 
+          }]
+        }, 
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { 
+            legend: { 
+              display: false 
+            }
+          }, 
+          scales: { 
+            x: { 
+              display: false 
+            }, 
+            y: { 
+              display: false 
+            }
+          }
+        }
+      }); 
+    }
+
+    /******************** NEW: UNDERWRITING LIST & FLOW *************************/
+    // New company data structure with review types, reasons and status
+    const companyData = [
+      {
+        name: 'Parker Group, Inc.',
+        reviewType: 'New Onboarding',
+        reason: '',
+        status: 'Open'
+      },
+      {
+        name: 'Zephyr Labs',
+        reviewType: 'Re-Underwriting',
+        reason: 'Re-Underwriting Fixed Cadence',
+        status: 'Open'
+      },
+      {
+        name: 'Nimbus Retail Co.',
+        reviewType: 'Risk Alert',
+        reason: 'Keyword',
+        status: 'Open'
+      },
+      {
+        name: 'Orion Foods LLC',
+        reviewType: 'New Onboarding',
+        reason: '',
+        status: 'Open'
+      },
+      {
+        name: 'Helios Energy Ltd.',
+        reviewType: 'Re-Underwriting',
+        reason: 'Potential Upgrade',
+        status: 'Open'
+      },
+      {
+        name: 'Vertex Apparel',
+        reviewType: 'Risk Alert',
+        reason: 'Material Amount',
+        status: 'Open'
+      },
+      {
+        name: 'Apex Logistics',
+        reviewType: 'Re-Underwriting',
+        reason: 'Potential Downgrade',
+        status: 'Open'
+      },
+      {
+        name: 'Quanta Health',
+        reviewType: 'Risk Alert',
+        reason: 'Copilot Alert',
+        status: 'Open'
+      },
+      // Historical entries with "Done" status
+      {
+        name: 'Atlas Medical Inc.',
+        reviewType: 'New Onboarding',
+        reason: '',
+        status: 'Done'
+      },
+      {
+        name: 'Nova Tech Solutions',
+        reviewType: 'Re-Underwriting',
+        reason: 'Re-Underwriting Fixed Cadence',
+        status: 'Done'
+      },
+      {
+        name: 'Polaris Manufacturing',
+        reviewType: 'Risk Alert',
+        reason: 'Material Amount',
+        status: 'Done'
+      },
+      {
+        name: 'Lumina Therapeutics',
+        reviewType: 'New Onboarding',
+        reason: '',
+        status: 'Done'
+      },
+      {
+        name: 'Cascade Logistics',
+        reviewType: 'Re-Underwriting',
+        reason: 'Potential Downgrade',
+        status: 'Done'
+      }
+    ];
+
+    function renderUnderwritingList(container) {
+      // Clear any existing content first
+      container.innerHTML = '';
+      
+      container.innerHTML = '<h1>Underwriting Workload</h1>';
+      
+      // Create tabs
+      const tabsContainer = document.createElement('div');
+      tabsContainer.className = 'tabs';
+      tabsContainer.innerHTML = `
+        <div class="tab active" data-tab="new-onboardings">New Onboardings</div>
+        <div class="tab" data-tab="existing-clients">Existing Clients</div>
+        <div class="tab" data-tab="historical">Historical Activity</div>
+      `;
+      container.appendChild(tabsContainer);
+      
+      // Create tab content containers
+      const newOnboardingsTab = document.createElement('div');
+      newOnboardingsTab.className = 'tab-content active';
+      newOnboardingsTab.id = 'tab-new-onboardings';
+      
+      const existingClientsTab = document.createElement('div');
+      existingClientsTab.className = 'tab-content';
+      existingClientsTab.id = 'tab-existing-clients';
+      
+      const historicalTab = document.createElement('div');
+      historicalTab.className = 'tab-content';
+      historicalTab.id = 'tab-historical';
+      
+      // Filter companies by type and status
+      const newOnboardings = companyData.filter(company => 
+        company.reviewType === 'New Onboarding' && company.status === 'Open');
+      
+      const existingClients = companyData.filter(company => 
+        company.reviewType !== 'New Onboarding' && company.status === 'Open');
+      
+      const historical = companyData.filter(company => 
+        company.status === 'Done');
+      
+      // Render tables for each tab
+      renderCompanyTable(newOnboardingsTab, newOnboardings);
+      renderCompanyTable(existingClientsTab, existingClients);
+      renderCompanyTable(historicalTab, historical);
+      
+      // Add tab content to container
+      container.appendChild(newOnboardingsTab);
+      container.appendChild(existingClientsTab);
+      container.appendChild(historicalTab);
+      
+      // Add tab switching functionality
+      tabsContainer.querySelectorAll('.tab').forEach(tab => {
+        tab.addEventListener('click', () => {
+          // Toggle active class on tabs
+          tabsContainer.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+          tab.classList.add('active');
+          
+          // Toggle active class on content
+          container.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+          document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+        });
+      });
+    }
+    
+    function renderCompanyTable(container, companies) {
+      if (companies.length === 0) {
+        container.innerHTML = '<p style="color: var(--muted); padding: 1rem 0;">No companies to display</p>';
+        return;
+      }
+      
+      // Create table
+      const table = document.createElement('table');
+      table.className = 'uw-table';
+      
+      // Add table header
+      const thead = document.createElement('thead');
+      thead.innerHTML = `
+        <tr>
+          <th>Company</th>
+          <th>Type of Review</th>
+          <th>Reason for Review</th>
+          <th>Status</th>
+        </tr>
+      `;
+      table.appendChild(thead);
+      
+      // Add table body
+      const tbody = document.createElement('tbody');
+      companies.forEach(company => {
+        const tr = document.createElement('tr');
+        
+        // Get tag class based on review type
+        let tagClass = '';
+        if (company.reviewType === 'New Onboarding') tagClass = 'tag-new';
+        else if (company.reviewType === 'Re-Underwriting') tagClass = 'tag-reuw';
+        else if (company.reviewType === 'Risk Alert') tagClass = 'tag-risk';
+        
+        // Get status tag class
+        let statusTagClass = company.status === 'Done' ? 'tag-done' : 'tag-status';
+        
+        tr.innerHTML = `
+          <td class="company-name">${company.name}</td>
+          <td><span class="tag ${tagClass}">${company.reviewType}</span></td>
+          <td class="reason">${company.reason}</td>
+          <td><span class="tag ${statusTagClass}">${company.status}</span></td>
+        `;
+        
+        tr.addEventListener('click', () => selectUnderwriting(company.name));
+        tbody.appendChild(tr);
+      });
+      
+      table.appendChild(tbody);
+      container.appendChild(table);
+    }
+
+    function selectUnderwriting(name) {
+      // Clear main content completely first
+      const main = document.getElementById('mainContent');
+      main.innerHTML = '';
+      
+      // Show company overview instead of UW sidebar
+      document.getElementById('navSidebar').style.display = 'none';
+      document.getElementById('companyOverviewSidebar').style.display = 'flex';
+      
+      // Update company name in overview
+      document.getElementById('companyOverviewName').textContent = name;
+      
+      // Render company overview screen
+      renderCompanyOverview(name);
+    }
+
+    /******************** NEW: COMPANY OVERVIEW SCREEN *************************/
+    function renderCompanyOverview(companyName) {
+      const main = document.getElementById('mainContent');
+      main.innerHTML = ''; // Ensure main content is completely clear
+      
+      // Create header with company name and Start UW button
+      const header = document.createElement('div');
+      header.className = 'company-header';
+      header.innerHTML = `
+        <h1>Company View: ${companyName}</h1>
+        <button class="start-uw-btn" id="startUWBtn">Start new UW</button>
+      `;
+      main.appendChild(header);
+      
+      // Create overview container with navigation and content
+      const overviewContainer = document.createElement('div');
+      overviewContainer.className = 'company-overview';
+      
+      // Create company content area
+      const contentArea = document.createElement('div');
+      contentArea.className = 'company-content';
+      contentArea.id = 'companyContentArea';
+      
+      // Add content to container
+      overviewContainer.appendChild(contentArea);
+      main.appendChild(overviewContainer);
+      
+      // Load default screen (company details)
+      loadCompanyScreen('companyDetails');
+      
+      // Add event listener for Start UW button
+      document.getElementById('startUWBtn').addEventListener('click', () => {
+        startNewUnderwriting(companyName);
+      });
+      
+      // Add event listeners for company navigation
+      document.querySelectorAll('[data-company-screen]').forEach(item => {
+        item.addEventListener('click', () => {
+          loadCompanyScreen(item.dataset.companyScreen);
+        });
+      });
+    }
+    
+    // Load company screen content
+    function loadCompanyScreen(screen) {
+      const contentArea = document.getElementById('companyContentArea');
+      contentArea.innerHTML = '';
+      
+      // Make sure main content only contains company view content
+      const main = document.getElementById('mainContent');
+      if (main.querySelector('.company-header') === null) {
+        // If we lost the company header, re-render the company view
+        renderCompanyOverview(document.getElementById('companyOverviewName').textContent);
+        return;
+      }
+      
+      // Highlight active navigation item
+      document.querySelectorAll('[data-company-screen]').forEach(item => {
+        if (item.dataset.companyScreen === screen) {
+          item.parentElement.classList.add('active');
+        } else {
+          item.parentElement.classList.remove('active');
+        }
+      });
+      
+      // Render content based on screen
+      switch(screen) {
+        case 'companyDetails':
+          renderCompanyDetails(contentArea);
+          break;
+        case 'currentOffer':
+          renderCurrentOffer(contentArea);
+          break;
+        case 'historicalUW':
+          renderHistoricalUW(contentArea);
+          break;
+        case 'dataConnectivity':
+          renderDataConnectivity(contentArea);
+          break;
+        case 'kyb':
+          renderKYB(contentArea);
+          break;
+        default:
+          contentArea.innerHTML = '<p>Select a section from the menu</p>';
+      }
+    }
+    
+    // Render company details screen
+    function renderCompanyDetails(container) {
+      const section = document.createElement('div');
+      section.className = 'info-section';
+      section.innerHTML = `
+        <h2>Company Information</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-item-label">Company Name</div>
+            <div class="info-item-value">${document.getElementById('companyOverviewName').textContent}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Industry</div>
+            <div class="info-item-value">Technology</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Incorporation Date</div>
+            <div class="info-item-value">Jan 15, 2018</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Business Type</div>
+            <div class="info-item-value">Corporation</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Address</div>
+            <div class="info-item-value">123 Main St, San Francisco, CA 94105</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Annual Revenue</div>
+            <div class="info-item-value">$3.2M</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(section);
+    }
+    
+    // Render current offer screen
+    function renderCurrentOffer(container) {
+      const section = document.createElement('div');
+      section.className = 'info-section';
+      section.innerHTML = `
+        <h2>Current Offer</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-item-label">Credit Limit</div>
+            <div class="info-item-value">$250,000</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">APR</div>
+            <div class="info-item-value">16.5%</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Payment Terms</div>
+            <div class="info-item-value">Net 30</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Cash Advance Rate</div>
+            <div class="info-item-value">1.5%</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Approval Date</div>
+            <div class="info-item-value">Mar 12, 2023</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Next Review</div>
+            <div class="info-item-value">Mar 12, 2024</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(section);
+    }
+    
+    // Render historical underwriting screen
+    function renderHistoricalUW(container) {
+      const section = document.createElement('div');
+      section.className = 'info-section';
+      section.innerHTML = `
+        <h2>Historical Underwriting</h2>
+        <table class="uw-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Decision</th>
+              <th>Credit Limit</th>
+              <th>APR</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Mar 12, 2023</td>
+              <td><span class="tag tag-reuw">Re-Underwriting</span></td>
+              <td>Approved</td>
+              <td>$250,000</td>
+              <td>16.5%</td>
+            </tr>
+            <tr>
+              <td>Sep 5, 2022</td>
+              <td><span class="tag tag-risk">Risk Alert</span></td>
+              <td>No Change</td>
+              <td>$200,000</td>
+              <td>17.2%</td>
+            </tr>
+            <tr>
+              <td>Mar 10, 2022</td>
+              <td><span class="tag tag-reuw">Re-Underwriting</span></td>
+              <td>Upgraded</td>
+              <td>$200,000</td>
+              <td>17.2%</td>
+            </tr>
+            <tr>
+              <td>Mar 8, 2021</td>
+              <td><span class="tag tag-new">New Onboarding</span></td>
+              <td>Approved</td>
+              <td>$150,000</td>
+              <td>18.5%</td>
+            </tr>
+          </tbody>
+        </table>
+      `;
+      container.appendChild(section);
+    }
+    
+    // Render data connectivity screen
+    function renderDataConnectivity(container) {
+      const section = document.createElement('div');
+      section.className = 'info-section';
+      section.innerHTML = `
+        <h2>Data Connectivity</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-item-label">Banking Connection</div>
+            <div class="info-item-value">✅ Connected (Chase)</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Accounting Software</div>
+            <div class="info-item-value">✅ Connected (QuickBooks)</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Payment Processor</div>
+            <div class="info-item-value">✅ Connected (Stripe)</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Last Data Refresh</div>
+            <div class="info-item-value">Today, 08:45 AM</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Data Quality Score</div>
+            <div class="info-item-value">92/100</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Data Completeness</div>
+            <div class="info-item-value">98%</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(section);
+    }
+    
+    // Render KYB/KYC screen
+    function renderKYB(container) {
+      const section = document.createElement('div');
+      section.className = 'info-section';
+      section.innerHTML = `
+        <h2>KYB / KYC</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-item-label">Business Verification</div>
+            <div class="info-item-value">✅ Verified</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Identity Verification</div>
+            <div class="info-item-value">✅ Verified</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Business Registration</div>
+            <div class="info-item-value">✅ Verified</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Tax ID</div>
+            <div class="info-item-value">✅ Verified</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Beneficial Owners</div>
+            <div class="info-item-value">✅ Verified (2)</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-label">Risk Score</div>
+            <div class="info-item-value">Low</div>
+          </div>
+        </div>
+      `;
+      container.appendChild(section);
+    }
+    
+    /******************** START NEW UNDERWRITING *************************/
+    function startNewUnderwriting(companyName) {
+      // Hide company overview sidebar
+      document.getElementById('companyOverviewSidebar').style.display = 'none';
+      
+      // Show UW sidebar
+      document.getElementById('navSidebar').style.display = 'flex';
+      
+      // Set company name
+      document.getElementById('companyBtn').textContent = companyName;
+      
+      // Expand the Underwriting Information submenu by default
+      const uwInfoSubmenu = document.getElementById('uwInfo');
+      uwInfoSubmenu.style.display = 'flex';
+      const uwInfoItem = document.querySelector('.nav-item[data-target="uwInfo"]');
+      const arrow = uwInfoItem.querySelector('span:last-child');
+      if (arrow) arrow.textContent = '▾';
+      
+      // Load dashboard with "Back to Company View" button
+      loadScreenWithCompanyReturn('uwDetails', companyName);
+    }
+    
+    // Modified screen loading function with company return button
+    function loadScreenWithCompanyReturn(screen, companyName) {
+      const main = document.getElementById('mainContent');
+      main.innerHTML = '';
+      
+      // Add "Back to Company View" button container
+      const headerContainer = document.createElement('div');
+      headerContainer.className = 'company-header';
+      headerContainer.style.marginBottom = '1.5rem';
+      
+      // Create Back button
+      const backButton = document.createElement('button');
+      backButton.className = 'start-uw-btn';
+      backButton.style.marginLeft = 'auto';
+      backButton.style.display = 'block';
+      backButton.textContent = 'Back to Company View';
+      backButton.addEventListener('click', () => {
+        returnToCompanyView(companyName);
+      });
+      
+      headerContainer.appendChild(backButton);
+      main.appendChild(headerContainer);
+      
+      // Load the actual screen content
+      if (screen === 'getStarted') {
+        renderNewUnderwriting(main, true); // Pass true to indicate we're adding to existing content
+      } else if (screen === 'uwDetails') {
+        renderUWDetails(main, companyName);
+      } else if (screen === 'spendBanking') {
+        renderSpendBanking(main, companyName);
+      } else if (screen === 'spendParker') {
+        renderSpendParker(main, companyName);
+      } else if (screen === 'dataGathering') {
+        renderDataGathering(main, companyName);
+      } else {
+        const h = document.createElement('h1');
+        h.textContent = screen.replace(/([A-Z])/g, ' $1');
+        h.style.fontSize = '1.25rem';
+        main.appendChild(h);
+      }
+    }
+    
+    /******************** UNDERWRITING DETAILS RENDERER *************************/
+    function renderUWDetails(container, companyName) {
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Underwriting Information</h1>
+        <div class="info-section">
+          <div class="info-grid">
+            <div class="info-item">
+              <div class="info-item-label">Company Name</div>
+              <div class="info-item-value">${companyName}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Underwriting ID</div>
+              <div class="info-item-value">UW-${new Date().getFullYear()}-${Math.floor(1000 + Math.random() * 9000)}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Start Date</div>
+              <div class="info-item-value">${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Status</div>
+              <div class="info-item-value"><span class="tag tag-status">In Progress</span></div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Underwriter</div>
+              <div class="info-item-value">Sarah Johnson</div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Reviewer</div>
+              <div class="info-item-value">Michael Chen</div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Expected Completion</div>
+              <div class="info-item-value">${new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</div>
+            </div>
+            <div class="info-item">
+              <div class="info-item-label">Priority</div>
+              <div class="info-item-value">Medium</div>
+            </div>
+          </div>
+        </div>
+        
+        <div class="info-section">
+          <h2>Underwriting Progress</h2>
+          <div style="background: var(--panel); border-radius: 8px; padding: 1.5rem; margin-top: 1rem;">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>Data Gathering</span>
+              <span>0%</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+              <div style="width: 0%; height: 100%; background: var(--accent); border-radius: 4px;"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>Labeling & Metrics</span>
+              <span>0%</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+              <div style="width: 0%; height: 100%; background: var(--accent); border-radius: 4px;"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>Spend Analysis</span>
+              <span>0%</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+              <div style="width: 0%; height: 100%; background: var(--accent); border-radius: 4px;"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>Scoring</span>
+              <span>0%</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+              <div style="width: 0%; height: 100%; background: var(--accent); border-radius: 4px;"></div>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+              <span>Decision Making</span>
+              <span>0%</span>
+            </div>
+            <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px;">
+              <div style="width: 0%; height: 100%; background: var(--accent); border-radius: 4px;"></div>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+    }
+
+    // Function to return to company view
+    function returnToCompanyView(companyName) {
+      // Hide UW sidebar
+      document.getElementById('navSidebar').style.display = 'none';
+      
+      // Show company overview sidebar
+      document.getElementById('companyOverviewSidebar').style.display = 'flex';
+      
+      // Render company overview
+      renderCompanyOverview(companyName);
+    }
+    
+    // Function to go back to the underwriting list
+    function goBackToList() {
+      // Hide navigation sidebars
+      document.getElementById('navSidebar').style.display = 'none';
+      document.getElementById('companyOverviewSidebar').style.display = 'none';
+      
+      // Show underwriting list
+      const main = document.getElementById('mainContent');
+      main.innerHTML = ''; // Ensure main content is completely clear
+      renderUnderwritingList(main);
+    }
+
+    /******************** NEW UNDERWRITING RENDERER *************************/
+    function renderNewUnderwriting(container, addingToExisting) {
+      // If we're adding to existing content, don't clear the container
+      if (!addingToExisting) {
+        container.innerHTML = '';
+      }
+      
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `<h1>New Underwriting</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="uwFloatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
+      container.appendChild(contentDiv);
+      
+      const ctx = document.getElementById('uwFloatChart').getContext('2d'); 
+      new Chart(ctx, { 
+        type: 'line', 
+        data: { 
+          labels: Array.from({length: 30}, (_, i) => `Day ${i+1}`), 
+          datasets: [{ 
+            label: 'Balance', 
+            data: Array.from({length: 30}, () => Math.random()*50+150), 
+            fill: true, 
+            tension: 0.3 
+          }, { 
+            label: 'Spend', 
+            data: Array.from({length: 30}, () => Math.random()*60+50), 
+            tension: 0.3, 
+            borderDash: [5, 5] 
+          }]
+        }, 
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { 
+            legend: { 
+              display: false 
+            }
+          }, 
+          scales: { 
+            x: { 
+              display: false 
+            }, 
+            y: { 
+              display: false 
+            }
+          }
+        }
+      }); 
+    }
+
+    /******************** SPEND PARKER RENDERER *************************/
+    function renderSpendParker(container, companyName) {
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Parker Spend Analysis</h1>
+        
+        <div style="margin-bottom: 2rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <div style="display: flex; gap: 1rem;">
+              <div>
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Card type:</div>
+                <div style="position: relative; width: 200px;">
+                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                    <option selected>All</option>
+                    <option>Credit</option>
+                    <option>Debit</option>
+                  </select>
+                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                </div>
+              </div>
+              <div>
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Duration:</div>
+                <div style="position: relative; width: 200px;">
+                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                    <option selected>All</option>
+                    <option>This Month</option>
+                    <option>Last Month</option>
+                    <option>Last 3 Months</option>
+                    <option>Last 6 Months</option>
+                    <option>Last Year</option>
+                  </select>
+                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                </div>
+              </div>
+              <div>
+                <div style="font-weight: 500; margin-bottom: 0.5rem;">Label:</div>
+                <div style="position: relative; width: 200px;">
+                  <select style="width: 100%; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                    <option selected>All</option>
+                    <option>Business</option>
+                    <option>Personal</option>
+                    <option>Travel</option>
+                    <option>Meals</option>
+                    <option>Software</option>
+                  </select>
+                  <div style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--accent);">▼</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div style="font-weight: 500; margin-bottom: 0.5rem;">Dates:</div>
+              <div style="display: flex; gap: 0.5rem;">
+                <input type="text" value="2/1/2024" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+                <input type="text" value="3/1/2025" style="width: 120px; padding: 0.5rem; border: 1px solid var(--border); background: var(--panel); color: var(--text); border-radius: 4px;">
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Parker Spend - by label</h2>
+            <canvas id="spendByLabelChart"></canvas>
+          </div>
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Parker Spend - by type</h2>
+            <canvas id="spendByTypeChart"></canvas>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Parker Spend - by top 20 merchants</h2>
+            <canvas id="spendByMerchantChart"></canvas>
+          </div>
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Parker Spend - by duration</h2>
+            <canvas id="spendByDurationChart"></canvas>
+          </div>
+        </div>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Utilization Trends</h2>
+            <canvas id="utilizationTrendsChart"></canvas>
+          </div>
+          <div style="position: relative; height: 400px; border: 1px solid var(--border); border-radius: 8px; padding: 1rem; background: var(--bg);">
+            <h2 style="font-size: 1.1rem; margin-bottom: 1rem; color: var(--muted);">Limit vs Balance</h2>
+            <canvas id="limitVsBalanceChart"></canvas>
+          </div>
+        </div>
+        
+        <div style="margin-top: 2rem; border: 1px solid var(--border); border-radius: 8px; overflow: hidden;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+            <thead>
+              <tr style="background: var(--panel); border-bottom: 1px solid var(--border);">
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">SUM</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">Merchant / transaction detail</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-02-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-03-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-04-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-05-01</th>
+                <th style="padding: 0.75rem; text-align: left; position: sticky; top: 0; background: var(--panel); z-index: 10;">2024-06-01</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">803,078</td>
+                <td style="padding: 0.75rem;">Amazon</td>
+                <td style="padding: 0.75rem; background: rgba(0, 255, 0, 0.1);">52,218</td>
+                <td style="padding: 0.75rem; background: rgba(0, 255, 0, 0.1);">73,430</td>
+                <td style="padding: 0.75rem;">44,256</td>
+                <td style="padding: 0.75rem;">55,358</td>
+                <td style="padding: 0.75rem;">48,616</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">164,285</td>
+                <td style="padding: 0.75rem;">Marketing Svcs</td>
+                <td style="padding: 0.75rem;">8,749</td>
+                <td style="padding: 0.75rem;">7,901</td>
+                <td style="padding: 0.75rem;">8,502</td>
+                <td style="padding: 0.75rem;">11,705</td>
+                <td style="padding: 0.75rem;">13,991</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">52,850</td>
+                <td style="padding: 0.75rem;">Upwork</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">13,817</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">-</td>
+                <td style="padding: 0.75rem;">13,456</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">36,897</td>
+                <td style="padding: 0.75rem;">Upwork</td>
+                <td style="padding: 0.75rem;">4,191</td>
+                <td style="padding: 0.75rem;">3,798</td>
+                <td style="padding: 0.75rem;">3,790</td>
+                <td style="padding: 0.75rem;">3,290</td>
+                <td style="padding: 0.75rem;">2,705</td>
+              </tr>
+              <tr style="border-bottom: 1px solid var(--border);">
+                <td style="padding: 0.75rem;">33,414</td>
+                <td style="padding: 0.75rem;">Google</td>
+                <td style="padding: 0.75rem;">1,682</td>
+                <td style="padding: 0.75rem;">3,446</td>
+                <td style="padding: 0.75rem;">2,895</td>
+                <td style="padding: 0.75rem;">2,902</td>
+                <td style="padding: 0.75rem;">3,861</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Create charts
+      setTimeout(() => {
+        createSpendByLabelChart();
+        createSpendByTypeChart();
+        createSpendByMerchantChart();
+        createSpendByDurationChart();
+        createUtilizationTrendsChart();
+        createLimitVsBalanceChart();
+      }, 100);
+    }
+    
+    function createSpendByLabelChart() {
+      const ctx = document.getElementById('spendByLabelChart').getContext('2d');
+      
+      // Generate quarters for labels
+      const quarters = [
+        '2023-Q3', '2023-Q4', '2024-Q1', '2024-Q2', '2024-Q3', '2024-Q4', 
+        '2024-Q5', '2024-Q6', '2024-Q7', '2024-Q8', '2024-Q9', '2024-Q10',
+        '2024-Q11', '2024-Q12', '2025-Q1'
+      ];
+      
+      // Mock data with specific values to match screenshot
+      const data = [
+        89395, 117543, 74696, 88861, 81595, 121135, 98432, 106669, 
+        142849, 103539, 84851, 111108, 87951
+      ];
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: quarters,
+          datasets: [{
+            label: 'Spend by Label',
+            data: data,
+            backgroundColor: '#f8ac59',
+            barPercentage: 0.6
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value.toLocaleString();
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return '$' + context.parsed.y.toLocaleString();
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createSpendByTypeChart() {
+      const ctx = document.getElementById('spendByTypeChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 13; i++) {
+        const date = new Date(2023, 9 + i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Create data for ACH Pay and Card
+      const achPayData = months.map(() => 20);
+      const cardData = months.map(() => 80);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'ACH Pay',
+              data: achPayData,
+              backgroundColor: '#dd4b39',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Card',
+              data: cardData,
+              backgroundColor: '#1c84c6',
+              stack: 'Stack 0'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              min: 0,
+              max: 100,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createSpendByMerchantChart() {
+      const ctx = document.getElementById('spendByMerchantChart').getContext('2d');
+      
+      // Generate quarters for labels
+      const quarters = [
+        '2023-Q3', '2023-Q4', '2024-Q1', '2024-Q2', '2024-Q3', '2024-Q4', 
+        '2024-Q5', '2024-Q6', '2024-Q7', '2024-Q8', '2024-Q9', '2024-Q10',
+        '2024-Q11', '2024-Q12', '2025-Q1'
+      ];
+      
+      // Generate datasets for top merchants
+      const amazonData = quarters.map(() => Math.random() * 60000 + 20000);
+      const marketingData = quarters.map(() => Math.random() * 15000 + 5000);
+      const upworkData = quarters.map(() => Math.random() * 10000 + 5000);
+      const googleData = quarters.map(() => Math.random() * 8000 + 2000);
+      const metaData = quarters.map(() => Math.random() * 5000 + 1000);
+      const othersData = quarters.map(() => Math.random() * 15000 + 5000);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: quarters,
+          datasets: [
+            {
+              label: 'Amazon',
+              data: amazonData,
+              backgroundColor: '#1c84c6',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Marketing Svcs',
+              data: marketingData,
+              backgroundColor: '#f8ac59',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Upwork',
+              data: upworkData,
+              backgroundColor: '#1ab394',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Google',
+              data: googleData,
+              backgroundColor: '#ed5565',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Meta',
+              data: metaData,
+              backgroundColor: '#23c6c8',
+              stack: 'Stack 0'
+            },
+            {
+              label: 'Others',
+              data: othersData,
+              backgroundColor: '#ccc',
+              stack: 'Stack 0'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  if (value === 0) return '0';
+                  return value / 1000 + 'K';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+    
+    function createSpendByDurationChart() {
+      const ctx = document.getElementById('spendByDurationChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 13; i++) {
+        const date = new Date(2023, 9 + i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Create data for durations
+      const duration1Data = months.map(() => 5);
+      const duration2Data = months.map(() => 10);
+      const duration3Data = months.map(() => 65);
+      const duration4Data = months.map(() => 10);
+      const duration5Data = months.map(() => 5);
+      const duration6Data = months.map(() => 5);
+      
+      new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: '< 30 days',
+              data: duration1Data,
+              backgroundColor: '#1c84c6',
+              stack: 'Stack 0'
+            },
+            {
+              label: '30-60 days',
+              data: duration2Data,
+              backgroundColor: '#1ab394',
+              stack: 'Stack 0'
+            },
+            {
+              label: '60-90 days',
+              data: duration3Data,
+              backgroundColor: '#f8ac59',
+              stack: 'Stack 0'
+            },
+            {
+              label: '90-120 days',
+              data: duration4Data,
+              backgroundColor: '#ed5565',
+              stack: 'Stack 0'
+            },
+            {
+              label: '120-150 days',
+              data: duration5Data,
+              backgroundColor: '#23c6c8',
+              stack: 'Stack 0'
+            },
+            {
+              label: '>150 days',
+              data: duration6Data,
+              backgroundColor: '#ccc',
+              stack: 'Stack 0'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              stacked: true,
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              stacked: true,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createUtilizationTrendsChart() {
+      const ctx = document.getElementById('utilizationTrendsChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 25; i++) {
+        const date = new Date(2023, 0 + i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Generate data
+      const avgMargin = [11.2, 11.7, 13.2, 20.0, 21.3, 25.0, 28.6, 29.6, 32.5, 37.1, 40.1, 42.4, 52.4, 52.9, 56.1, 59.0, 59.3, 60.6, 63.5, 60.6, 56.7, 51.2, 51.0, 50.9, 52.5];
+      const pinInflow = [19.7, 18.8, 16.6, 16, 15.2, 16.1, 19.2, 21.1, 22.3, 24.1, 27.6, 31.9, 35.3, 37.1, 38.5, 39.6, 40.3, 41.7, 43.1, 43.9, 41.5, 40.9, 39.9, 38.8, 38.0];
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'Gross Margin %',
+              data: avgMargin,
+              fill: false,
+              borderColor: '#ed5565',
+              backgroundColor: '#ed5565',
+              tension: 0.4
+            },
+            {
+              label: 'Pin Inflow %',
+              data: pinInflow,
+              fill: false,
+              borderColor: '#1c84c6',
+              backgroundColor: '#1c84c6',
+              tension: 0.4
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              min: 0,
+              max: 80,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function createLimitVsBalanceChart() {
+      const ctx = document.getElementById('limitVsBalanceChart').getContext('2d');
+      
+      // Generate days for labels (60 days)
+      const days = [];
+      for (let i = 0; i < 60; i++) {
+        days.push(i + 1);
+      }
+      
+      // Generate data
+      const limitData = Array(days.length).fill(250000);
+      
+      // Create fluctuating balance data
+      const balanceData = [];
+      let balance = 180000;
+      for (let i = 0; i < days.length; i++) {
+        balance += (Math.random() - 0.48) * 10000;
+        balance = Math.max(100000, Math.min(250000, balance));
+        balanceData.push(balance);
+      }
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: days,
+          datasets: [
+            {
+              label: 'Limit',
+              data: limitData,
+              borderColor: '#1c84c6',
+              backgroundColor: '#1c84c6',
+              borderWidth: 2,
+              pointRadius: 0
+            },
+            {
+              label: 'Balance',
+              data: balanceData,
+              borderColor: '#ed5565',
+              backgroundColor: '#ed5565',
+              borderWidth: 2,
+              pointRadius: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return '$' + (value / 1000) + 'K';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                boxWidth: 12,
+                padding: 10,
+                font: {
+                  size: 10
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    /******************** STARTUP: show list first *************************/
+    document.addEventListener('DOMContentLoaded',()=>{
+      const main = document.getElementById('mainContent');
+      renderUnderwritingList(main);
+      
+      // Add back button click handlers
+      document.getElementById('backBtn').addEventListener('click', goBackToList);
+      document.getElementById('backToListBtn').addEventListener('click', goBackToList);
+      
+      // Add company screen navigation click handlers
+      document.querySelectorAll('.nav-item[data-company-screen]').forEach(item => {
+        item.addEventListener('click', () => {
+          loadCompanyScreen(item.dataset.companyScreen);
+        });
+      });
+    });
+
+    /******************** DATA GATHERING RENDERER *************************/
+    function renderDataGathering(container, companyName) {
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `
+        <h1>Data Gathering</h1>
+        
+        <div style="display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 2rem;">
+          <!-- Source Readiness Section -->
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Readiness</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Banking Data</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
+                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Today, 09:24 AM</div>
+                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
+                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
+                    <span style="color: #1ab394; font-size: 18px;">✓</span>
+                  </span>
+                </div>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Accounting Data</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
+                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Today, 08:15 AM</div>
+                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
+                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
+                    <span style="color: #1ab394; font-size: 18px;">✓</span>
+                  </span>
+                </div>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem; position: relative;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Payment Processor</h3>
+                <div style="font-size: 1.75rem; font-weight: 600; margin-bottom: 0.5rem; color: #1ab394;">Connected</div>
+                <div style="font-size: 0.85rem; color: var(--muted);">Last update: Yesterday, 11:30 PM</div>
+                <div style="position: absolute; top: 1.25rem; right: 1.25rem;">
+                  <span style="display: inline-block; width: 36px; height: 36px; background-color: rgba(26, 179, 148, 0.25); border-radius: 50%; text-align: center; line-height: 36px;">
+                    <span style="color: #1ab394; font-size: 18px;">✓</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; line-height: 1.5;">
+              <p style="margin-bottom: 1rem;">All data sources are successfully connected and providing up-to-date information. There are no connectivity issues to address at this time.</p>
+              <p>The following data sources are active:</p>
+              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Banking: Chase Business Complete Banking (connected via Plaid)</li>
+                <li>Accounting: QuickBooks Online (direct API integration)</li>
+                <li>Payment Processor: Stripe (direct API integration)</li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Source Completeness Section -->
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Completeness</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div>
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Banking Data Completeness</span>
+                  <span>98%</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+                  <div style="width: 98%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Accounting Data Completeness</span>
+                  <span>92%</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+                  <div style="width: 92%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                  <span>Payment Processor Data Completeness</span>
+                  <span>100%</span>
+                </div>
+                <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px; margin-bottom: 1rem;">
+                  <div style="width: 100%; height: 100%; background: #1ab394; border-radius: 4px;"></div>
+                </div>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Missing Data</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <th style="text-align: left; padding: 0.5rem 0;">Data Source</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Missing Elements</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Impact</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Banking</td>
+                      <td style="padding: 0.5rem 0;">2 months historical data (2022)</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Low</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Accounting</td>
+                      <td style="padding: 0.5rem 0;">Some expense categorizations</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Medium</span></td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Payment Processor</td>
+                      <td style="padding: 0.5rem 0;">None</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #1ab394;">None</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; line-height: 1.5;">
+              <p style="margin-bottom: 1rem;">Overall data completeness is at <strong>96.67%</strong>, which exceeds the minimum threshold of 90% required for accurate analysis.</p>
+              <p>The following actions are recommended to improve data completeness:</p>
+              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Request additional historical banking data from the client for the missing 2022 months</li>
+                <li>Work with the accounting team to properly categorize remaining uncategorized expenses</li>
+              </ul>
+            </div>
+          </div>
+          
+          <!-- Source Consistency Section -->
+          <div style="border: 1px solid var(--border); border-radius: 8px; padding: 1.5rem; background: var(--bg);">
+            <h2 style="font-size: 1.2rem; margin-bottom: 1rem; font-weight: 500;">Source Consistency</h2>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem;">
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--muted);">Monthly Reconciliation Status</h3>
+                <canvas id="reconciliationChart" height="220"></canvas>
+              </div>
+              
+              <div style="background: var(--panel); border-radius: 8px; padding: 1.25rem;">
+                <h3 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--muted);">Consistency Issues</h3>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem;">
+                  <thead>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <th style="text-align: left; padding: 0.5rem 0;">Issue Type</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Count</th>
+                      <th style="text-align: left; padding: 0.5rem 0;">Severity</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Revenue Discrepancies</td>
+                      <td style="padding: 0.5rem 0;">2</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #f8ac59;">Medium</span></td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border);">
+                      <td style="padding: 0.5rem 0;">Timing Differences</td>
+                      <td style="padding: 0.5rem 0;">5</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #1ab394;">Low</span></td>
+                    </tr>
+                    <tr>
+                      <td style="padding: 0.5rem 0;">Missing Transactions</td>
+                      <td style="padding: 0.5rem 0;">1</td>
+                      <td style="padding: 0.5rem 0;"><span style="color: #ed5565;">High</span></td>
+                    </tr>
+                  </tbody>
+                </table>
+                
+                <div style="margin-top: 1.5rem;">
+                  <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span>Overall Consistency Score</span>
+                    <span>89%</span>
+                  </div>
+                  <div style="width: 100%; height: 8px; background: var(--border); border-radius: 4px;">
+                    <div style="width: 89%; height: 100%; background: #f8ac59; border-radius: 4px;"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div style="font-size: 0.9rem; line-height: 1.5;">
+              <p style="margin-bottom: 1rem;">Data consistency across sources has a score of <strong>89%</strong>, which is slightly below the ideal threshold of 95%. The main issues are related to revenue recognition timing between accounting and payment processor systems.</p>
+              <p>The following actions are recommended to improve data consistency:</p>
+              <ul style="list-style-type: disc; margin-left: 1.5rem; margin-top: 0.5rem;">
+                <li>Investigate the high-severity missing transaction from January 2024 ($15,230)</li>
+                <li>Reconcile the revenue discrepancies between QuickBooks and Stripe for February and March 2024</li>
+                <li>Document the acceptable timing differences for month-end processing</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      `;
+      container.appendChild(contentDiv);
+      
+      // Create reconciliation chart after DOM is loaded
+      setTimeout(() => {
+        createReconciliationChart();
+      }, 100);
+    }
+    
+    function createReconciliationChart() {
+      const ctx = document.getElementById('reconciliationChart').getContext('2d');
+      
+      // Generate months for labels
+      const months = [];
+      for (let i = 0; i < 12; i++) {
+        const date = new Date(2023, i, 1);
+        months.push(date.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+      }
+      
+      // Generate random data between 80 and 100 for reconciliation percentages
+      const reconciliationData = [98, 97, 95, 92, 94, 96, 98, 99, 97, 94, 89, 91];
+      
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [{
+            label: 'Reconciliation %',
+            data: reconciliationData,
+            fill: false,
+            borderColor: '#1ab394',
+            backgroundColor: '#1ab394',
+            tension: 0.4
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              grid: {
+                display: false
+              }
+            },
+            y: {
+              min: 80,
+              max: 100,
+              grid: {
+                color: 'rgba(255, 255, 255, 0.1)'
+              },
+              ticks: {
+                callback: function(value) {
+                  return value + '%';
+                }
+              }
+            }
+          },
+          plugins: {
+            legend: {
+              display: false
+            }
+          }
+        }
+      });
+    }
+  </script>
+</body>
+</html>
