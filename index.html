@@ -49,90 +49,6 @@
     .submenu { display:none; flex-direction:column; margin-left:0.75rem; }
     .submenu a { text-decoration:none; color:var(--muted); font-size:0.8rem; padding:0.3rem 0; cursor:pointer; }
 
-    /* ---------------- PROGRESS INDICATOR ---------------- */
-    .progress-sidebar {
-      position: relative;
-      padding-left: 40px;
-    }
-    
-    .progress-line {
-      position: absolute;
-      left: 20px;
-      top: 30px;
-      bottom: 20px;
-      width: 2px;
-      background-color: var(--border);
-      z-index: 1;
-    }
-    
-    .nav-item {
-      position: relative;
-    }
-    
-    .progress-step {
-      position: absolute;
-      left: -31px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 20px;
-      height: 20px;
-      border-radius: 50%;
-      border: 2px solid var(--border);
-      background-color: var(--panel);
-      z-index: 2;
-      transition: all 0.3s ease;
-    }
-    
-    .progress-step.completed {
-      border-color: #6366f1;
-      background-color: #6366f1;
-    }
-    
-    .progress-step.current {
-      border-color: #6366f1;
-      background-color: var(--panel);
-    }
-    
-    .progress-step.current::before {
-      content: "";
-      position: absolute;
-      top: 5px;
-      left: 5px;
-      width: 6px;
-      height: 6px;
-      border-radius: 50%;
-      background-color: #6366f1;
-    }
-    
-    .progress-step.future {
-      border-color: var(--border);
-      background-color: var(--panel);
-    }
-    
-    .nav-item.completed {
-      color: #fff;
-      font-weight: 500;
-    }
-    
-    .nav-item.current {
-      color: #fff;
-      font-weight: 600;
-    }
-    
-    .nav-item.future {
-      color: var(--muted);
-    }
-    
-    /* Completed line segments */
-    .progress-line-completed {
-      position: absolute;
-      left: 20px;
-      top: 30px;
-      width: 2px;
-      background-color: #6366f1;
-      z-index: 1;
-    }
-
     /* ---------------- MAIN ---------------- */
     main { flex:1; overflow-y:auto; padding:2rem; }
     h1 { font-size:1.5rem; font-weight:600; margin-bottom:1.5rem; }
@@ -290,48 +206,24 @@
     </div>
     <div class="nav-item" id="companyBtn" data-screen="getStarted">Parker Group, Inc.</div>
 
-    <nav class="progress-sidebar">
-      <div class="progress-line"></div>
-      <div class="progress-line-completed" id="progressCompleted"></div>
-      
-      <div class="nav-item" data-target="uwInfo">
-        <div class="progress-step completed"></div>
-        <span>Underwriting Information <span>▸</span></span>
-      </div>
+    <nav>
+      <div class="nav-item" data-target="uwInfo">Underwriting Information <span>▸</span></div>
       <div class="submenu" id="uwInfo"><a data-screen="uwDetails">UW Details</a></div>
 
-      <div class="nav-item" data-screen="dataGathering">
-        <div class="progress-step current"></div>
-        <span>Data gathering</span>
-      </div>
+      <div class="nav-item" data-screen="dataGathering">Data gathering</div>
 
-      <div class="nav-item" data-target="labeling">
-        <div class="progress-step future"></div>
-        <span>Labeling <span>▸</span></span>
-      </div>
+      <div class="nav-item" data-target="labeling">Labeling <span>▸</span></div>
       <div class="submenu" id="labeling"><a data-screen="plLabeling">Profit & loss labeling</a><a data-screen="bsLabeling">Balance sheet labeling</a><a data-screen="bankLabeling">Banking labeling</a></div>
 
-      <div class="nav-item" data-target="metricCalc">
-        <div class="progress-step future"></div>
-        <span>Metric Calculation <span>▸</span></span>
-      </div>
+      <div class="nav-item" data-target="metricCalc">Metric Calculation <span>▸</span></div>
       <div class="submenu" id="metricCalc"><a data-screen="graphsMetrics">Graphs & metric decisions</a></div>
 
-      <div class="nav-item" data-target="spend">
-        <div class="progress-step future"></div>
-        <span>Spend <span>▸</span></span>
-      </div>
+      <div class="nav-item" data-target="spend">Spend <span>▸</span></div>
       <div class="submenu" id="spend"><a data-screen="spendBanking">Banking</a><a data-screen="spendParker">Parker</a></div>
 
-      <div class="nav-item" data-screen="scoring">
-        <div class="progress-step future"></div>
-        <span>Scoring</span>
-      </div>
+      <div class="nav-item" data-screen="scoring">Scoring</div>
 
-      <div class="nav-item" data-target="decisions">
-        <div class="progress-step future"></div>
-        <span>Decisions <span>▸</span></span>
-      </div>
+      <div class="nav-item" data-target="decisions">Decisions <span>▸</span></div>
       <div class="submenu" id="decisions"><a data-screen="securities">Securities</a><a data-screen="finalDecisions">Final decisions</a></div>
     </nav>
   </aside>
@@ -375,28 +267,7 @@
     function addMessage(text,type){ const div=document.createElement('div'); div.className=`msg ${type}`; div.textContent=text; chatMessages.appendChild(div); chatMessages.scrollTop=chatMessages.scrollHeight; }
 
     /******************** EXISTING NAV DROPDOWN LOGIC (unchanged) *************************/
-    document.querySelectorAll('.nav-item[data-target]').forEach(item => { 
-      item.addEventListener('click', function(event) {
-        // Only proceed if the click wasn't on the progress step indicator
-        if (event.target.classList.contains('progress-step')) {
-          return;
-        }
-        
-        // Get the submenu element
-        const submenu = document.getElementById(this.dataset.target);
-        if (!submenu) return;
-        
-        // Toggle submenu visibility
-        const open = submenu.style.display === 'flex';
-        submenu.style.display = open ? 'none' : 'flex';
-        
-        // Update the arrow - handle both regular and nested span structures
-        const arrow = this.querySelector('span > span') || this.querySelector('span:last-child');
-        if (arrow) {
-          arrow.textContent = open ? '▸' : '▾';
-        }
-      });
-    });
+    document.querySelectorAll('.nav-item[data-target]').forEach(item=>{ item.addEventListener('click', ()=>{ const submenu=document.getElementById(item.dataset.target); if(submenu){ const open=submenu.style.display==='flex'; submenu.style.display=open?'none':'flex'; const arrow=item.querySelector('span:last-child'); if(arrow) arrow.textContent=open?'▸':'▾'; }});});
 
     /******************** EXISTING SCREEN ROUTING *************************/
     document.querySelectorAll('[data-screen]').forEach(el => { 
@@ -409,151 +280,85 @@
           // We're in UW mode, preserve the back button
           const companyName = document.getElementById('companyBtn').textContent;
           loadScreenWithCompanyReturn(el.dataset.screen, companyName);
-          
-          // Update progress steps when clicking on a screen
-          updateProgressSteps(el.dataset.screen);
         }
       });
     });
-    
-    // For submenu items
-    document.querySelectorAll('.submenu a[data-screen]').forEach(el => {
-      el.addEventListener('click', () => {
-        // Update progress steps when clicking on a submenu screen
-        updateProgressSteps(el.dataset.screen);
-      });
-    });
-    
-    /******************** PROGRESS STEPS FUNCTIONS *************************/
-    // Define the order of steps for the progress indicator
-    const progressSteps = [
-      { id: 'uwDetails', label: 'Underwriting Information', parent: 'uwInfo' },
-      { id: 'dataGathering', label: 'Data gathering', parent: null },
-      { id: 'plLabeling', label: 'P&L Labeling', parent: 'labeling' },
-      { id: 'bsLabeling', label: 'Balance Sheet Labeling', parent: 'labeling' },
-      { id: 'bankLabeling', label: 'Banking Labeling', parent: 'labeling' },
-      { id: 'graphsMetrics', label: 'Graphs & Metrics', parent: 'metricCalc' },
-      { id: 'spendBanking', label: 'Banking Spend', parent: 'spend' },
-      { id: 'spendParker', label: 'Parker Spend', parent: 'spend' },
-      { id: 'scoring', label: 'Scoring', parent: null },
-      { id: 'securities', label: 'Securities', parent: 'decisions' },
-      { id: 'finalDecisions', label: 'Final Decisions', parent: 'decisions' }
-    ];
-    
-    // Initialize the progress bar in the navigation sidebar
-    function initializeProgressBar() {
-      // Only initialize if the navSidebar is visible
-      if (document.getElementById('navSidebar').style.display !== 'flex') return;
-      
-      // Add progress-sidebar class to the nav element
-      const navElement = document.querySelector('#navSidebar nav');
-      navElement.classList.add('progress-sidebar');
-      
-      // Add progress line
-      const progressLine = document.createElement('div');
-      progressLine.className = 'progress-line';
-      navElement.appendChild(progressLine);
-      
-      // Add progress line for completed steps
-      const progressLineCompleted = document.createElement('div');
-      progressLineCompleted.className = 'progress-line-completed';
-      progressLineCompleted.style.height = '0px';
-      navElement.appendChild(progressLineCompleted);
-      
-      // Add progress step indicators to nav items
-      document.querySelectorAll('#navSidebar .nav-item').forEach(item => {
-        const progressStep = document.createElement('div');
-        progressStep.className = 'progress-step future';
-        item.prepend(progressStep);
-        item.classList.add('future');
-      });
-      
-      // Set the first step as current by default
-      updateProgressSteps('uwDetails');
+
+    function loadScreen(screen) { 
+      const main = document.getElementById('mainContent'); 
+      main.innerHTML = ''; 
+      if (screen === 'getStarted') { 
+        renderGetStarted(main);
+      } else if (screen === 'plLabeling') {
+        renderPLLabeling(main);
+      } else if (screen === 'bsLabeling') {
+        renderBSLabeling(main);
+      } else if (screen === 'bankLabeling') {
+        renderBankLabeling(main);
+      } else if (screen === 'spendBanking') {
+        renderSpendBanking(main);
+      } else if (screen === 'spendParker') {
+        renderSpendParker(main);
+      } else if (screen === 'dataGathering') {
+        renderDataGathering(main);
+      } else if (screen === 'scoring') {
+        renderScoring(main);
+      } else if (screen === 'graphsMetrics') {
+        renderGraphsMetrics(main);
+      } else { 
+        const h = document.createElement('h1'); 
+        h.textContent = screen.replace(/([A-Z])/g, ' $1'); 
+        h.style.fontSize = '1.25rem'; 
+        main.appendChild(h);
+      } 
     }
-    
-    // Update progress steps based on current screen
-    function updateProgressSteps(currentScreenId) {
-      // Find the index of the current screen in the progress steps
-      const currentIndex = progressSteps.findIndex(step => step.id === currentScreenId);
-      if (currentIndex === -1) return;
-      
-      // Update nav items and progress steps
-      progressSteps.forEach((step, index) => {
-        // Find the corresponding nav item
-        let navItem;
-        
-        if (step.parent) {
-          // For submenu items, we need to mark the parent
-          navItem = document.querySelector(`.nav-item[data-target="${step.parent}"]`);
-        } else {
-          navItem = document.querySelector(`.nav-item[data-screen="${step.id}"]`);
-        }
-        
-        if (!navItem) return;
-        
-        // Remove all status classes
-        navItem.classList.remove('completed', 'current', 'future');
-        
-        // Find the progress step
-        const progressStep = navItem.querySelector('.progress-step');
-        if (!progressStep) return;
-        
-        progressStep.classList.remove('completed', 'current', 'future');
-        
-        // Update status based on index
-        if (index < currentIndex) {
-          // Step is completed
-          navItem.classList.add('completed');
-          progressStep.classList.add('completed');
-        } else if (index === currentIndex) {
-          // Step is current
-          navItem.classList.add('current');
-          progressStep.classList.add('current');
-        } else {
-          // Step is in the future
-          navItem.classList.add('future');
-          progressStep.classList.add('future');
-        }
-      });
-      
-      // Update the completed progress line
-      const navElement = document.querySelector('#navSidebar nav');
-      const currentStep = document.querySelector('#navSidebar .nav-item .progress-step.current');
-      
-      if (navElement && currentStep) {
-        const progressLineCompleted = document.querySelector('.progress-line-completed');
-        const stepRect = currentStep.getBoundingClientRect();
-        const navRect = navElement.getBoundingClientRect();
-        
-        // Calculate the height based on the current step's position
-        const height = stepRect.top - navRect.top + (stepRect.height / 2);
-        progressLineCompleted.style.height = `${height}px`;
+
+    /******************** ORIGINAL GET STARTED RENDERER (unchanged) *************************/
+    function renderGetStarted(container, addingToExisting) {
+      // If we're adding to existing content, don't clear the container
+      if (!addingToExisting) {
+        container.innerHTML = '';
       }
-    }
-    
-    function startNewUnderwriting(companyName) {
-      // Hide company overview sidebar
-      document.getElementById('companyOverviewSidebar').style.display = 'none';
       
-      // Show UW sidebar
-      document.getElementById('navSidebar').style.display = 'flex';
+      const contentDiv = document.createElement('div');
+      contentDiv.innerHTML = `<h1>Get Started</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="floatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
+      container.appendChild(contentDiv);
       
-      // Set company name
-      document.getElementById('companyBtn').textContent = companyName;
-      
-      // Expand the Underwriting Information submenu by default
-      const uwInfoSubmenu = document.getElementById('uwInfo');
-      uwInfoSubmenu.style.display = 'flex';
-      const uwInfoItem = document.querySelector('.nav-item[data-target="uwInfo"]');
-      const arrow = uwInfoItem.querySelector('span:last-child');
-      if (arrow) arrow.textContent = '▾';
-      
-      // Initialize the progress bar
-      initializeProgressBar();
-      
-      // Load dashboard with "Back to Company View" button
-      loadScreenWithCompanyReturn('uwDetails', companyName);
+      const ctx = document.getElementById('floatChart').getContext('2d'); 
+      new Chart(ctx, { 
+        type: 'line', 
+        data: { 
+          labels: Array.from({length: 30}, (_, i) => `Day ${i+1}`), 
+          datasets: [{ 
+            label: 'Balance', 
+            data: Array.from({length: 30}, () => Math.random()*50+150), 
+            fill: true, 
+            tension: 0.3 
+          }, { 
+            label: 'Spend', 
+            data: Array.from({length: 30}, () => Math.random()*60+50), 
+            tension: 0.3, 
+            borderDash: [5, 5] 
+          }]
+        }, 
+        options: { 
+          responsive: true, 
+          maintainAspectRatio: false, 
+          plugins: { 
+            legend: { 
+              display: false 
+            }
+          }, 
+          scales: { 
+            x: { 
+              display: false 
+            }, 
+            y: { 
+              display: false 
+            }
+          }
+        }
+      }); 
     }
 
     /******************** NEW: UNDERWRITING LIST & FLOW *************************/
@@ -1070,9 +875,6 @@
       const arrow = uwInfoItem.querySelector('span:last-child');
       if (arrow) arrow.textContent = '▾';
       
-      // Initialize the progress bar
-      initializeProgressBar();
-      
       // Load dashboard with "Back to Company View" button
       loadScreenWithCompanyReturn('uwDetails', companyName);
     }
@@ -1251,10 +1053,10 @@
       }
       
       const contentDiv = document.createElement('div');
-      contentDiv.innerHTML = `<h1>New Underwriting</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="floatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
+      contentDiv.innerHTML = `<h1>New Underwriting</h1><div class="grid"><div class="card"><h3>Credit</h3><div class="small">Credit Available</div><div class="metric">$212,935.87</div><div class="small" style="margin-top:1rem">Utilization</div><div class="metric" style="font-size:1.25rem">54.8%</div></div><div class="card"><h3>Banking</h3><div class="small">Cash Balance</div><div class="metric">$5,043</div></div><div class="card"><h3>Insights</h3><div class="small">Net Sales</div><div class="metric">$20,124</div><div class="small" style="margin-top:1rem">Contribution Profit</div><div class="metric" style="font-size:1.25rem">$7,217</div></div><div class="card" style="grid-column:span 2"><h3>Float: Daily Cash Boost</h3><div class="metric" style="margin-bottom:0.75rem">$172,398</div><canvas id="uwFloatChart"></canvas></div><div class="card"><h3>Rewards</h3><div class="small">Points Balance</div><div class="metric">984,052</div><a href="#" style="color:var(--accent); font-size:0.85rem; text-decoration:underline; margin-top:0.5rem;">Redeem</a></div></div>`;
       container.appendChild(contentDiv);
       
-      const ctx = document.getElementById('floatChart').getContext('2d'); 
+      const ctx = document.getElementById('uwFloatChart').getContext('2d'); 
       new Chart(ctx, { 
         type: 'line', 
         data: { 
